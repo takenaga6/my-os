@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Well Body 商談準備ツール</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:       #4CAF7D;
+      --green-dark:  #3a9165;
+      --green-light: #e8f5ee;
+      --text:        #1a1a1a;
+      --text-sub:    #6b7280;
+      --border:      #e0e7e4;
+      --bg:          #f7faf8;
+      --white:       #ffffff;
+      --radius:      10px;
+      --shadow:      0 2px 12px rgba(76, 175, 125, 0.10);
+    }
+
+    body {
+      font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── ヘッダー ── */
+    header {
+      background: var(--white);
+      border-bottom: 2px solid var(--green);
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow);
+    }
+    header .logo {
+      width: 36px;
+      height: 36px;
+      background: var(--green);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--green-dark);
+      letter-spacing: 0.02em;
+    }
+    header span {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-left: 4px;
+    }
+
+    /* ── タブナビゲーション ── */
+    .tab-nav {
+      display: flex;
+      gap: 0;
+      padding: 24px 32px 0;
+      border-bottom: 2px solid var(--border);
+      background: var(--white);
+    }
+    .tab-btn {
+      padding: 12px 28px;
+      border: none;
+      background: transparent;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.15s, border-color 0.15s;
+      letter-spacing: 0.02em;
+    }
+    .tab-btn:hover { color: var(--green); }
+    .tab-btn.active {
+      color: var(--green);
+      border-bottom-color: var(--green);
+    }
+
+    /* ── コンテンツエリア ── */
+    .tab-content { display: none; padding: 32px; max-width: 960px; margin: 0 auto; }
+    .tab-content.active { display: block; }
+
+    /* ── カード ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--green-dark);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .badge {
+      background: var(--green-light);
+      color: var(--green-dark);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    /* ── フォーム要素 ── */
+    .form-group { margin-bottom: 16px; }
+    .form-group:last-child { margin-bottom: 0; }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    label .required {
+      color: #e05555;
+      margin-left: 4px;
+    }
+    input[type="text"],
+    input[type="url"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--white);
+      transition: border-color 0.15s, box-shadow 0.15s;
+      outline: none;
+    }
+    input[type="text"]:focus,
+    input[type="url"]:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.12);
+    }
+    textarea { resize: vertical; min-height: 90px; }
+
+    /* ── ボタン ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 24px;
+      border: none;
+      border-radius: 7px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      letter-spacing: 0.03em;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary {
+      background: var(--green);
+      color: white;
+    }
+    .btn-primary:hover { background: var(--green-dark); }
+    .btn-secondary {
+      background: var(--green-light);
+      color: var(--green-dark);
+    }
+    .btn-secondary:hover { background: #d3ede0; }
+    .btn-outline {
+      background: white;
+      color: var(--green-dark);
+      border: 1.5px solid var(--green);
+    }
+    .btn-outline:hover { background: var(--green-light); }
+
+    /* ── 結果エリア ── */
+    .result-section {
+      margin-top: 28px;
+    }
+    .result-section .section-heading {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+    .result-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+    .result-card-header {
+      background: var(--green-light);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .result-card-header .num {
+      background: var(--green);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .result-card-header .title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--green-dark);
+    }
+    .result-card-body {
+      padding: 20px;
+    }
+    .placeholder-text {
+      color: var(--text-sub);
+      font-size: 13px;
+      line-height: 1.8;
+      text-align: center;
+      padding: 24px 0;
+    }
+    .placeholder-text .icon { font-size: 28px; display: block; margin-bottom: 8px; }
+
+    /* ── フィードバックタブ ── */
+    .upload-area {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 36px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      background: var(--bg);
+    }
+    .upload-area:hover {
+      border-color: var(--green);
+      background: var(--green-light);
+    }
+    .upload-area .upload-icon { font-size: 36px; display: block; margin-bottom: 10px; }
+    .upload-area p { font-size: 14px; color: var(--text-sub); }
+    .upload-area strong { color: var(--green-dark); }
+
+    .result-select {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .result-badge {
+      padding: 8px 20px;
+      border-radius: 20px;
+      border: 2px solid var(--border);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: white;
+      color: var(--text-sub);
+    }
+    .result-badge:hover { border-color: var(--green); color: var(--green-dark); }
+    .result-badge.selected {
+      background: var(--green);
+      color: white;
+      border-color: var(--green);
+    }
+    .result-badge.ng.selected  { background: #e05555; border-color: #e05555; }
+    .result-badge.hold.selected { background: #f5a623; border-color: #f5a623; }
+
+    /* ── ナレッジタブ ── */
+    .knowledge-filters {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .filter-chip {
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      background: white;
+      color: var(--text-sub);
+      transition: all 0.15s;
+    }
+    .filter-chip:hover, .filter-chip.active {
+      background: var(--green-light);
+      border-color: var(--green);
+      color: var(--green-dark);
+    }
+
+    .knowledge-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .knowledge-table th {
+      background: var(--green-light);
+      color: var(--green-dark);
+      font-weight: 700;
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 2px solid var(--border);
+    }
+    .knowledge-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: middle;
+    }
+    .knowledge-table tr:hover td { background: var(--green-light); }
+    .status-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .status-success { background: #e8f5ee; color: #2d7a52; }
+    .status-hold    { background: #fff3e0; color: #b26a00; }
+    .status-ng      { background: #fde8e8; color: #b22222; }
+
+    /* ── 分析結果プレースホルダー ── */
+    .analysis-placeholder {
+      border: 1.5px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 36px 20px;
+      text-align: center;
+      background: var(--bg);
+    }
+
+    /* ── ユーティリティ ── */
+    .row { display: flex; gap: 16px; }
+    .row .form-group { flex: 1; }
+    .mt-8 { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+    .flex-end { display: flex; justify-content: flex-end; }
+
+    @media (max-width: 640px) {
+      .tab-nav { padding: 16px 16px 0; overflow-x: auto; }
+      .tab-btn { padding: 10px 16px; font-size: 13px; white-space: nowrap; }
+      .tab-content { padding: 16px; }
+      .row { flex-direction: column; gap: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<header>
+  <div class="logo">W</div>
+  <h1>Well Body 商談準備ツール<span>β</span></h1>
+</header>
+
+<!-- タブナビ -->
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('prep')">🗂 商談準備</button>
+  <button class="tab-btn" onclick="switchTab('feedback')">🎙 商談フィードバック</button>
+  <button class="tab-btn" onclick="switchTab('knowledge')">📚 ナレッジ</button>
+</nav>
+
+<!-- ───────────── タブ①：商談準備 ───────────── -->
+<div id="tab-prep" class="tab-content active">
+
+  <!-- 入力フォーム -->
+  <div class="card">
+    <div class="card-title">📋 商談先情報の入力</div>
+
+    <div class="row">
+      <div class="form-group">
+        <label>企業名<span class="required">*</span></label>
+        <input type="text" id="company-name" placeholder="例：株式会社○○物流" />
+      </div>
+      <div class="form-group">
+        <label>企業URL<span class="required">*</span></label>
+        <input type="url" id="company-url" placeholder="https://example.co.jp" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>社長名 <span style="color:var(--text-sub); font-weight:400;">（任意・記事検索の精度が上がります）</span></label>
+      <input type="text" id="president-name" placeholder="例：山田 太郎" />
+    </div>
+
+    <div class="form-group">
+      <label>アポ取得時に得た情報</label>
+      <textarea id="apo-info" placeholder="例：&#10;担当者：田中さん（総務部長）&#10;課題感：腰痛持ちの社員が多く、最近1人休職した&#10;きっかけ：弊社チラシを見て&#10;従業員数：120名&#10;業種：物流・運送"></textarea>
+    </div>
+
+    <div class="flex-end mt-8">
+      <button class="btn btn-primary" id="generate-btn" onclick="generateReport()">
+        ✨ 商談準備資料を生成する
+      </button>
+    </div>
+  </div>
+
+  <!-- 生成結果 -->
+  <div class="result-section" id="result-area">
+    <div class="section-heading">生成結果</div>
+
+    <!-- ① 企業リサーチサマリー -->
+    <div class="result-card">
+      <div class="result-card-header">
+        <div class="num">①</div>
+        <div class="title">企業リサーチサマリー</div>
+      </div>
+      <div class="result-card-body" id="result-research">
+        <div class="placeholder-text">
+          <span class="icon">🔍</span>
+          企業名とURLを入力して「生成する」を押してください
+        </div>
+      </div>
+    </div>
+
+    <!-- ② キラートーク -->
+    <div class="result-card">
+      <div class="result-card-header">
+        <div class="num">②</div>
+        <div class="title">キラートーク（業種別カスタマイズ）</div>
+      </div>
+      <div class="result-card-body" id="result-talk">
+        <div class="placeholder-text">
+          <span class="icon">💬</span>
+          商談フロー×業種に合わせたトークを生成します
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ 商談資料カスタマイズ指示 -->
+    <div class="result-card">
+      <div class="result-card-header">
+        <div class="num">③</div>
+        <div class="title">商談資料カスタマイズ指示</div>
+      </div>
+      <div class="result-card-body" id="result-material">
+        <div class="placeholder-text">
+          <span class="icon">📊</span>
+          PPTスライドの優先順と見せ方を提案します
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ チラシ骨子 -->
+    <div class="result-card">
+      <div class="result-card-header">
+        <div class="num">④</div>
+        <div class="title">従業員向けチラシの骨子</div>
+      </div>
+      <div class="result-card-body" id="result-flyer">
+        <div class="placeholder-text">
+          <span class="icon">📄</span>
+          業種・働き方に合わせたキャッチコピー案を生成します
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ───────────── タブ②：商談フィードバック ───────────── -->
+<div id="tab-feedback" class="tab-content">
+
+  <!-- 商談結果 -->
+  <div class="card">
+    <div class="card-title">📝 商談結果の入力</div>
+
+    <div class="row">
+      <div class="form-group">
+        <label>商談先企業</label>
+        <input type="text" placeholder="例：株式会社○○物流" />
+      </div>
+      <div class="form-group">
+        <label>商談日</label>
+        <input type="text" placeholder="例：2026-04-01" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>商談結果</label>
+      <div class="result-select mt-8">
+        <div class="result-badge selected" onclick="selectResult(this, 'success')">✅ 成約（体験会確定）</div>
+        <div class="result-badge hold" onclick="selectResult(this, 'hold')">🕐 保留・検討中</div>
+        <div class="result-badge ng" onclick="selectResult(this, 'ng')">❌ NG</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>補足メモ（ボイレコで拾えなかった情報）</label>
+      <textarea placeholder="例：&#10;・社長が健康経営に前向きだった&#10;・予算は3月末まで使える&#10;・競合他社（○○）と比較中"></textarea>
+    </div>
+  </div>
+
+  <!-- ボイレコアップロード -->
+  <div class="card">
+    <div class="card-title">🎙 録音データのアップロード <span class="badge">Whisper文字起こし</span></div>
+
+    <div class="upload-area" onclick="document.getElementById('voice-upload').click()">
+      <span class="upload-icon">🎵</span>
+      <p><strong>クリックしてファイルを選択</strong>またはドラッグ＆ドロップ</p>
+      <p style="margin-top:6px; font-size:12px;">対応形式：MP3 / MP4 / M4A / WAV（最大500MB）</p>
+      <input type="file" id="voice-upload" accept=".mp3,.mp4,.m4a,.wav" style="display:none" />
+    </div>
+
+    <div class="flex-end mt-16">
+      <button class="btn btn-primary" onclick="analyzeVoice()">
+        🔍 分析する
+      </button>
+    </div>
+  </div>
+
+  <!-- 分析結果 -->
+  <div class="card">
+    <div class="card-title">📈 分析結果</div>
+    <div class="analysis-placeholder" id="feedback-result">
+      <span style="font-size:32px; display:block; margin-bottom:10px;">🎙</span>
+      <p style="color:var(--text-sub); font-size:13px;">録音データをアップロードして「分析する」を押してください</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ───────────── タブ③：ナレッジ ───────────── -->
+<div id="tab-knowledge" class="tab-content">
+
+  <div class="card">
+    <div class="card-title">📚 過去の商談データ</div>
+
+    <!-- フィルター -->
+    <div class="knowledge-filters">
+      <div class="filter-chip active">すべて</div>
+      <div class="filter-chip">✅ 成約</div>
+      <div class="filter-chip">🕐 保留</div>
+      <div class="filter-chip">❌ NG</div>
+      <div class="filter-chip">物流・運送</div>
+      <div class="filter-chip">製造業</div>
+      <div class="filter-chip">IT・デスクワーク</div>
+      <div class="filter-chip">医療・福祉</div>
+    </div>
+
+    <!-- テーブル -->
+    <div style="overflow-x:auto;">
+      <table class="knowledge-table">
+        <thead>
+          <tr>
+            <th>企業名</th>
+            <th>業種</th>
+            <th>従業員数</th>
+            <th>商談日</th>
+            <th>結果</th>
+            <th>キラートーク評価</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- サンプルデータ -->
+          <tr>
+            <td><strong>株式会社○○物流</strong></td>
+            <td>物流・運送</td>
+            <td>120名</td>
+            <td>2026-03-28</td>
+            <td><span class="status-badge status-success">成約</span></td>
+            <td>⭐⭐⭐⭐⭐</td>
+            <td><button class="btn btn-outline" style="padding:5px 12px; font-size:12px;">詳細</button></td>
+          </tr>
+          <tr>
+            <td><strong>△△製造株式会社</strong></td>
+            <td>製造業</td>
+            <td>80名</td>
+            <td>2026-03-25</td>
+            <td><span class="status-badge status-hold">保留</span></td>
+            <td>⭐⭐⭐</td>
+            <td><button class="btn btn-outline" style="padding:5px 12px; font-size:12px;">詳細</button></td>
+          </tr>
+          <tr>
+            <td><strong>□□システム株式会社</strong></td>
+            <td>IT・デスクワーク</td>
+            <td>45名</td>
+            <td>2026-03-20</td>
+            <td><span class="status-badge status-ng">NG</span></td>
+            <td>⭐⭐</td>
+            <td><button class="btn btn-outline" style="padding:5px 12px; font-size:12px;">詳細</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="color:var(--text-sub); font-size:12px; margin-top:12px; text-align:right;">
+      ※ サンプルデータです。API連携後に実データが表示されます
+    </p>
+  </div>
+
+  <!-- ナレッジサマリー -->
+  <div class="card">
+    <div class="card-title">💡 業種別 刺さるパターン <span class="badge">ナレッジ蓄積中</span></div>
+    <div class="analysis-placeholder">
+      <span style="font-size:32px; display:block; margin-bottom:10px;">📊</span>
+      <p style="color:var(--text-sub); font-size:13px;">商談データが蓄積されると、業種別の「刺さるパターン」が自動生成されます</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // タブ切り替え
+  function switchTab(name) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  // 商談結果バッジの選択
+  function selectResult(el, type) {
+    document.querySelectorAll('.result-badge').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    // NG/保留はカラーを変えるため動的にclassを付与
+    el.classList.add(type === 'ng' ? 'ng' : type === 'hold' ? 'hold' : '');
+  }
+
+  // テキストを改行・段落を保ったHTMLに変換するユーティリティ
+  function textToHtml(text) {
+    if (!text) return '<span style="color:var(--text-sub);">（生成結果なし）</span>';
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n\n+/g, '</p><p>')
+      .replace(/\n/g, '<br>')
+      .replace(/^/, '<p>')
+      .replace(/$/, '</p>');
+  }
+
+  // 商談準備資料の生成（バックエンドAPIを呼び出す）
+  async function generateReport() {
+    const name      = document.getElementById('company-name').value.trim();
+    const url       = document.getElementById('company-url').value.trim();
+    const president = document.getElementById('president-name').value.trim();
+    const apoInfo   = document.getElementById('apo-info').value.trim();
+
+    if (!name || !url) {
+      alert('企業名とURLを入力してください');
+      return;
+    }
+
+    // ボタンを無効化してローディング表示
+    const btn = document.getElementById('generate-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ 生成中…（30秒〜1分かかります）';
+
+    const loadingHtml = '<div class="placeholder-text"><span class="icon">⏳</span>生成中...</div>';
+    ['result-research','result-talk','result-material','result-flyer'].forEach(id => {
+      document.getElementById(id).innerHTML = loadingHtml;
+    });
+
+    try {
+      const resp = await fetch('/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          company_name:    name,
+          company_url:     url,
+          president_name:  president,
+          apo_info:        apoInfo,
+        }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+        throw new Error(err.detail || '生成に失敗しました');
+      }
+
+      const data = await resp.json();
+
+      // 結果を各カードに表示
+      document.getElementById('result-research').innerHTML = textToHtml(data.research);
+      document.getElementById('result-talk').innerHTML     = textToHtml(data.talk);
+      document.getElementById('result-material').innerHTML = textToHtml(data.material);
+      document.getElementById('result-flyer').innerHTML    = textToHtml(data.flyer);
+
+    } catch (e) {
+      ['result-research','result-talk','result-material','result-flyer'].forEach(id => {
+        document.getElementById(id).innerHTML =
+          `<p style="color:#e05555; font-size:13px;">❌ エラー: ${e.message}</p>`;
+      });
+    } finally {
+      // ボタンを元に戻す
+      btn.disabled = false;
+      btn.textContent = '✨ 商談準備資料を生成する';
+    }
+  }
+
+  // 音声分析（ダミー）
+  function analyzeVoice() {
+    const upload = document.getElementById('voice-upload');
+    if (!upload.files.length) {
+      alert('録音ファイルをアップロードしてください');
+      return;
+    }
+    document.getElementById('feedback-result').innerHTML =
+      '<div class="placeholder-text"><span class="icon">⏳</span>文字起こし・分析中...</div>';
+    setTimeout(() => {
+      document.getElementById('feedback-result').innerHTML = `
+        <p style="font-size:13px; line-height:2; color:var(--text-sub); text-align:center; padding:16px 0;">
+          ⚠️ <strong style="color:var(--text);">API未連携</strong>のため、ここに分析結果が表示されます<br>
+          <span>（商談フロー評価 / 刺さった発言 / 改善点 / 次のアクション提案）</span>
+        </p>`;
+    }, 1000);
+  }
+
+  // フィルターチップ
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
