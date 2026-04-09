@@ -11,13 +11,14 @@ Well Body 週次営業レポート自動生成スクリプト
 6. reports/ フォルダに日付付きファイルとして保存
 7. Slackの #営業 チャンネルに @尺長孝紀 メンション付きで投稿
 
-必要な環境変数：
-  ANTHROPIC_API_KEY        : Claude APIキー
-  NOTION_API_KEY           : Notion インテグレーションキー
-  SLACK_BOT_TOKEN          : Slack Bot Token（xoxb-で始まるもの）
-                             必要なスコープ：chat:write, channels:history
-  GOOGLE_CREDENTIALS_JSON  : Google OAuth2認証情報JSONファイルのパス
-                             （初回のみブラウザで認証が必要）
+必要な環境変数（.env ファイルに記載、または直接システム環境変数として設定）：
+  ANTHROPIC_API_KEY           : Claude APIキー
+  NOTION_API_KEY              : Notion インテグレーションキー
+  SLACK_BOT_TOKEN             : Slack Bot Token（xoxb-で始まるもの）
+                                必要なスコープ：chat:write, channels:history
+  GOOGLE_SERVICE_ACCOUNT_JSON : Google サービスアカウントキーJSON
+                                （JSON文字列 or JSONファイルパス）
+  HUBSPOT_TOKEN               : HubSpot プライベートアプリトークン（省略可）
 
 実行方法：
   python weekly_report.py
@@ -29,6 +30,17 @@ import json
 import requests
 from datetime import datetime
 from anthropic import Anthropic
+
+# .env ファイルを自動読み込み（python-dotenv）
+# .env がなくても動作する（システム環境変数にフォールバック）
+try:
+    from dotenv import load_dotenv
+    load_dotenv(
+        dotenv_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"),
+        override=False,  # システム環境変数が既に設定されている場合は上書きしない
+    )
+except ImportError:
+    pass  # python-dotenv 未インストール時はスキップ（環境変数から読む）
 
 
 # ============================================================

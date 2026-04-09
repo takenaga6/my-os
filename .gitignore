@@ -1,0 +1,26 @@
+# 環境変数・秘密情報
+.env
+*.env
+*.key
+
+# Google認証トークン・クレデンシャル
+google_token.json
+google_credentials.json
+*service_account*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# ログ・レポート出力
+logs/
+*.log
+reports/*.md
+
+# OS
+.DS_Store
+Thumbs.db
