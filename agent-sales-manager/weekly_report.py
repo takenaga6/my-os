@@ -37,7 +37,7 @@ try:
     from dotenv import load_dotenv
     load_dotenv(
         dotenv_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"),
-        override=False,  # システム環境変数が既に設定されている場合は上書きしない
+        override=True,
     )
 except ImportError:
     pass  # python-dotenv 未インストール時はスキップ（環境変数から読む）
@@ -714,7 +714,7 @@ def fetch_shodan_analysis() -> str:
     週次レポート用に集計した文字列を返す。
 
     取得するデータ：
-    - 全商談記録（result=success/hold/ng）
+    - 全商談記録（result=win/hold/loss）
     - hit/miss/objectionの集計
     - 失注理由カテゴリの分布
     - スコア平均
@@ -738,7 +738,8 @@ def fetch_shodan_analysis() -> str:
         total = len(records)
 
         # --- result（結果）別の件数集計 ---
-        result_counts: dict[str, int] = {"success": 0, "hold": 0, "ng": 0, "other": 0}
+        # index.html・server.py では win/hold/loss を使用（success/ngは旧仕様）
+        result_counts: dict[str, int] = {"win": 0, "hold": 0, "loss": 0, "other": 0}
         for r in records:
             result = r.get("result", "").lower()
             if result in result_counts:
@@ -746,9 +747,9 @@ def fetch_shodan_analysis() -> str:
             else:
                 result_counts["other"] += 1
 
-        # 成約率 = success / (success + ng)  ※holdは保留中なので分母に含めない
-        closed = result_counts["success"] + result_counts["ng"]
-        win_rate = (result_counts["success"] / closed * 100) if closed > 0 else 0
+        # 成約率 = win / (win + loss)  ※holdは保留中なので分母に含めない
+        closed = result_counts["win"] + result_counts["loss"]
+        win_rate = (result_counts["win"] / closed * 100) if closed > 0 else 0
 
         # --- hit/miss/objectionの集計 ---
         all_hits: list[str] = []
@@ -800,7 +801,7 @@ def fetch_shodan_analysis() -> str:
         # --- テキスト組み立て ---
         lines = [
             "### 【商談分析ツール】Well Body商談記録サマリー",
-            f"総商談件数: {total}件（成約: {result_counts['success']}件, 保留: {result_counts['hold']}件, 失注: {result_counts['ng']}件）",
+            f"総商談件数: {total}件（成約: {result_counts['win']}件, 保留: {result_counts['hold']}件, 失注: {result_counts['loss']}件）",
             f"成約率（クローズド商談ベース）: {win_rate:.1f}%",
         ]
 

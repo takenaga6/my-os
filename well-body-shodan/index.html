@@ -3,84 +3,85 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Well Body 商談準備ツール</title>
+  <title>Well Body｜商談準備ツール</title>
   <style>
+    /* ── リセット・ベース ─────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
       --green:       #4CAF7D;
-      --green-dark:  #3a9165;
+      --green-dark:  #3a9068;
       --green-light: #e8f5ee;
+      --green-pale:  #f4fbf7;
       --text:        #1a1a1a;
       --text-sub:    #6b7280;
-      --border:      #e0e7e4;
-      --bg:          #f7faf8;
+      --border:      #e0e0e0;
+      --bg:          #f7f8fa;
       --white:       #ffffff;
       --radius:      10px;
-      --shadow:      0 2px 12px rgba(76, 175, 125, 0.10);
+      --shadow:      0 2px 12px rgba(0,0,0,0.08);
     }
-
     body {
-      font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif;
+      font-family: -apple-system, 'Hiragino Sans', 'Meiryo', sans-serif;
       background: var(--bg);
       color: var(--text);
+      font-size: 14px;
       min-height: 100vh;
     }
 
-    /* ── ヘッダー ── */
-    header {
+    /* ── ヘッダー ──────────────────────────── */
+    .header {
       background: var(--white);
       border-bottom: 2px solid var(--green);
-      padding: 14px 32px;
+      padding: 0 24px;
       display: flex;
       align-items: center;
+      height: 56px;
       gap: 12px;
-      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
     }
-    header .logo {
-      width: 36px;
-      height: 36px;
+    .header-logo {
+      width: 28px;
+      height: 28px;
       background: var(--green);
-      border-radius: 8px;
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
-      font-weight: bold;
-      font-size: 18px;
-    }
-    header h1 {
-      font-size: 18px;
       font-weight: 700;
-      color: var(--green-dark);
-      letter-spacing: 0.02em;
+      font-size: 14px;
+      flex-shrink: 0;
     }
-    header span {
-      font-size: 12px;
-      color: var(--text-sub);
-      margin-left: 4px;
+    .header-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.02em;
     }
 
-    /* ── タブナビゲーション ── */
+    /* ── タブナビ ─────────────────────────── */
     .tab-nav {
-      display: flex;
-      gap: 0;
-      padding: 24px 32px 0;
-      border-bottom: 2px solid var(--border);
       background: var(--white);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      padding: 0 24px;
     }
     .tab-btn {
-      padding: 12px 28px;
+      background: none;
       border: none;
-      background: transparent;
-      font-size: 14px;
+      cursor: pointer;
+      padding: 14px 22px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--text-sub);
-      cursor: pointer;
       border-bottom: 3px solid transparent;
-      margin-bottom: -2px;
       transition: color 0.15s, border-color 0.15s;
-      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
     .tab-btn:hover { color: var(--green); }
     .tab-btn.active {
@@ -88,655 +89,1466 @@
       border-bottom-color: var(--green);
     }
 
-    /* ── コンテンツエリア ── */
-    .tab-content { display: none; padding: 32px; max-width: 960px; margin: 0 auto; }
-    .tab-content.active { display: block; }
+    /* ── メインレイアウト ────────────────────── */
+    .main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 28px 20px 60px;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 
-    /* ── カード ── */
+    /* ── カード ──────────────────────────── */
     .card {
       background: var(--white);
-      border: 1px solid var(--border);
       border-radius: var(--radius);
+      box-shadow: var(--shadow);
       padding: 24px;
       margin-bottom: 20px;
-      box-shadow: var(--shadow);
     }
     .card-title {
-      font-size: 15px;
+      font-size: 12px;
       font-weight: 700;
-      color: var(--green-dark);
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
       margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .card-title .badge {
-      background: var(--green-light);
-      color: var(--green-dark);
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
     }
 
-    /* ── フォーム要素 ── */
-    .form-group { margin-bottom: 16px; }
-    .form-group:last-child { margin-bottom: 0; }
+    /* ── フォーム ────────────────────────── */
+    .form-row { margin-bottom: 16px; }
+    .form-row:last-child { margin-bottom: 0; }
     label {
       display: block;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
-      color: var(--text);
+      color: var(--text-sub);
       margin-bottom: 6px;
     }
-    label .required {
-      color: #e05555;
-      margin-left: 4px;
-    }
+    label .required { color: var(--green); margin-left: 3px; }
     input[type="text"],
     input[type="url"],
     textarea,
     select {
       width: 100%;
-      padding: 10px 14px;
       border: 1.5px solid var(--border);
       border-radius: 7px;
-      font-size: 14px;
-      font-family: inherit;
+      padding: 9px 13px;
+      font-size: 13px;
       color: var(--text);
+      font-family: inherit;
+      transition: border-color 0.15s;
       background: var(--white);
-      transition: border-color 0.15s, box-shadow 0.15s;
       outline: none;
     }
-    input[type="text"]:focus,
-    input[type="url"]:focus,
-    textarea:focus,
-    select:focus {
+    input:focus, textarea:focus, select:focus {
       border-color: var(--green);
-      box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.12);
+      box-shadow: 0 0 0 3px rgba(76,175,125,0.12);
     }
-    textarea { resize: vertical; min-height: 90px; }
+    textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
 
-    /* ── ボタン ── */
+    /* ── ボタン ──────────────────────────── */
     .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 11px 24px;
       border: none;
-      border-radius: 7px;
-      font-size: 14px;
+      border-radius: 8px;
+      padding: 11px 24px;
+      font-size: 13px;
       font-weight: 700;
       cursor: pointer;
       transition: background 0.15s, transform 0.1s;
-      letter-spacing: 0.03em;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
-    .btn:active { transform: scale(0.98); }
-    .btn-primary {
-      background: var(--green);
-      color: white;
-    }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--green); color: white; }
     .btn-primary:hover { background: var(--green-dark); }
-    .btn-secondary {
-      background: var(--green-light);
-      color: var(--green-dark);
-    }
-    .btn-secondary:hover { background: #d3ede0; }
-    .btn-outline {
-      background: white;
-      color: var(--green-dark);
-      border: 1.5px solid var(--green);
-    }
-    .btn-outline:hover { background: var(--green-light); }
+    .btn-outline { background: white; color: var(--green); border: 1.5px solid var(--green); }
+    .btn-outline:hover { background: var(--green-pale); }
+    .btn-lg { padding: 13px 32px; font-size: 14px; }
+    .btn-block { width: 100%; justify-content: center; }
 
-    /* ── 結果エリア ── */
-    .result-section {
-      margin-top: 28px;
+    /* ── セクションヘッダー ──────────────── */
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 20px;
     }
-    .result-section .section-heading {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-sub);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 12px;
+    .section-title { font-size: 18px; font-weight: 700; }
+    .section-sub { font-size: 12px; color: var(--text-sub); margin-top: 3px; }
+
+    /* ── 結果グリッド ─────────────────────── */
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 20px;
     }
+    @media (max-width: 640px) { .result-grid { grid-template-columns: 1fr; } }
     .result-card {
-      background: var(--white);
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: var(--radius);
       overflow: hidden;
-      margin-bottom: 14px;
     }
     .result-card-header {
       background: var(--green-light);
-      padding: 12px 20px;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      border-bottom: 1px solid var(--border);
+      gap: 8px;
     }
-    .result-card-header .num {
+    .result-badge {
+      width: 26px;
+      height: 26px;
       background: var(--green);
       color: white;
-      font-size: 12px;
-      font-weight: 700;
-      width: 24px;
-      height: 24px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
       flex-shrink: 0;
     }
-    .result-card-header .title {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--green-dark);
-    }
+    .result-card-title { font-size: 13px; font-weight: 700; color: var(--green-dark); }
     .result-card-body {
-      padding: 20px;
+      padding: 14px 16px;
+      min-height: 120px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text);
+      white-space: pre-wrap;
     }
-    .placeholder-text {
+    .result-empty { color: var(--text-sub); font-style: italic; font-size: 12px; }
+
+    /* ── ローディング ──────────────────────── */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
       color: var(--text-sub);
       font-size: 13px;
-      line-height: 1.8;
-      text-align: center;
       padding: 24px 0;
     }
-    .placeholder-text .icon { font-size: 28px; display: block; margin-bottom: 8px; }
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid var(--border);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── フィードバックタブ ── */
+    /* ── ラジオ（商談結果） ───────────────── */
+    .result-radio-group { display: flex; gap: 10px; }
+    .result-radio { flex: 1; position: relative; }
+    .result-radio input[type="radio"] { position: absolute; opacity: 0; width: 0; }
+    .result-radio label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sub);
+      transition: all 0.15s;
+      margin: 0;
+    }
+    .result-radio input:checked + label {
+      border-color: var(--green);
+      background: var(--green-light);
+      color: var(--green-dark);
+    }
+    .result-radio label:hover { border-color: var(--green); }
+
+    /* ── アップロードエリア ──────────────── */
     .upload-area {
       border: 2px dashed var(--border);
       border-radius: var(--radius);
-      padding: 36px 20px;
+      padding: 32px 20px;
       text-align: center;
       cursor: pointer;
       transition: border-color 0.15s, background 0.15s;
-      background: var(--bg);
     }
-    .upload-area:hover {
+    .upload-area:hover, .upload-area.dragover {
       border-color: var(--green);
+      background: var(--green-pale);
+    }
+    .upload-icon { font-size: 32px; margin-bottom: 8px; }
+    .upload-text { font-size: 13px; color: var(--text-sub); line-height: 1.6; }
+    .upload-text strong { color: var(--green); }
+    .upload-hint { font-size: 11px; color: #9ca3af; margin-top: 6px; }
+    .file-selected {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
       background: var(--green-light);
-    }
-    .upload-area .upload-icon { font-size: 36px; display: block; margin-bottom: 10px; }
-    .upload-area p { font-size: 14px; color: var(--text-sub); }
-    .upload-area strong { color: var(--green-dark); }
-
-    .result-select {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .result-badge {
-      padding: 8px 20px;
-      border-radius: 20px;
-      border: 2px solid var(--border);
+      border-radius: 7px;
       font-size: 13px;
-      font-weight: 700;
+      color: var(--green-dark);
+      font-weight: 600;
+      margin-top: 12px;
+    }
+    .file-selected .remove-file {
+      margin-left: auto;
       cursor: pointer;
-      transition: all 0.15s;
-      background: white;
       color: var(--text-sub);
+      font-size: 16px;
+      line-height: 1;
     }
-    .result-badge:hover { border-color: var(--green); color: var(--green-dark); }
-    .result-badge.selected {
-      background: var(--green);
-      color: white;
-      border-color: var(--green);
-    }
-    .result-badge.ng.selected  { background: #e05555; border-color: #e05555; }
-    .result-badge.hold.selected { background: #f5a623; border-color: #f5a623; }
 
-    /* ── ナレッジタブ ── */
-    .knowledge-filters {
+    /* ── フィードバック結果 ──────────────── */
+    .feedback-result {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .feedback-result-header {
+      background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+      padding: 14px 18px;
+      color: white;
+    }
+    .feedback-result-header h3 { font-size: 14px; font-weight: 700; }
+    .feedback-result-header p { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+    .feedback-result-body {
+      padding: 16px 18px;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    /* ── ナレッジタブ ──────────────────── */
+    .knowledge-tabs {
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
+      gap: 8px;
       margin-bottom: 20px;
     }
-    .filter-chip {
-      padding: 6px 16px;
+    .knowledge-tab-btn {
+      padding: 8px 20px;
       border-radius: 20px;
       border: 1.5px solid var(--border);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
       background: white;
+      font-size: 13px;
+      font-weight: 600;
       color: var(--text-sub);
+      cursor: pointer;
       transition: all 0.15s;
     }
-    .filter-chip:hover, .filter-chip.active {
-      background: var(--green-light);
-      border-color: var(--green);
-      color: var(--green-dark);
-    }
+    .knowledge-tab-btn.active { background: var(--green); border-color: var(--green); color: white; }
+    .knowledge-tab-btn:hover:not(.active) { border-color: var(--green); color: var(--green); }
+    .knowledge-panel { display: none; }
+    .knowledge-panel.active { display: block; }
 
-    .knowledge-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
+    .knowledge-card {
+      background: white;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border);
+      padding: 16px 18px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: box-shadow 0.15s, border-color 0.15s;
     }
-    .knowledge-table th {
-      background: var(--green-light);
-      color: var(--green-dark);
-      font-weight: 700;
-      padding: 10px 14px;
-      text-align: left;
-      border-bottom: 2px solid var(--border);
+    .knowledge-card:hover { box-shadow: var(--shadow); border-color: var(--green); }
+    .knowledge-card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
     }
-    .knowledge-table td {
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      color: var(--text);
-      vertical-align: middle;
-    }
-    .knowledge-table tr:hover td { background: var(--green-light); }
-    .status-badge {
-      display: inline-block;
-      padding: 3px 10px;
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px;
       border-radius: 12px;
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 600;
     }
-    .status-success { background: #e8f5ee; color: #2d7a52; }
-    .status-hold    { background: #fff3e0; color: #b26a00; }
-    .status-ng      { background: #fde8e8; color: #b22222; }
-
-    /* ── 分析結果プレースホルダー ── */
-    .analysis-placeholder {
-      border: 1.5px dashed var(--border);
-      border-radius: var(--radius);
-      padding: 36px 20px;
+    .tag-win  { background: #dcfce7; color: #16a34a; }
+    .tag-loss { background: #fee2e2; color: #dc2626; }
+    .tag-hold { background: #fef9c3; color: #ca8a04; }
+    .tag-industry { background: var(--green-light); color: var(--green-dark); }
+    .knowledge-card-date { font-size: 11px; color: var(--text-sub); margin-left: auto; }
+    .knowledge-card-company { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .knowledge-card-excerpt {
+      font-size: 12px;
+      color: var(--text-sub);
+      line-height: 1.6;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .knowledge-empty {
       text-align: center;
-      background: var(--bg);
+      padding: 60px 20px;
+      color: var(--text-sub);
     }
+    .knowledge-empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .knowledge-empty p { font-size: 13px; line-height: 1.7; }
 
-    /* ── ユーティリティ ── */
-    .row { display: flex; gap: 16px; }
-    .row .form-group { flex: 1; }
-    .mt-8 { margin-top: 8px; }
-    .mt-16 { margin-top: 16px; }
-    .flex-end { display: flex; justify-content: flex-end; }
-
-    @media (max-width: 640px) {
-      .tab-nav { padding: 16px 16px 0; overflow-x: auto; }
-      .tab-btn { padding: 10px 16px; font-size: 13px; white-space: nowrap; }
-      .tab-content { padding: 16px; }
-      .row { flex-direction: column; gap: 0; }
+    /* ── モーダル ──────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
     }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal {
+      background: white;
+      border-radius: 12px;
+      max-width: 640px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      transform: translateY(12px);
+      transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .modal-header h2 { font-size: 16px; font-weight: 700; }
+    .modal-header p { font-size: 12px; color: var(--text-sub); margin-top: 3px; }
+    .modal-close {
+      background: none; border: none; font-size: 20px;
+      cursor: pointer; color: var(--text-sub); line-height: 1; padding: 2px; flex-shrink: 0;
+    }
+    .modal-body { padding: 22px; }
+    .modal-text { font-size: 13px; line-height: 1.9; color: var(--text); }
+
+    /* ユーティリティ */
+    .mt-4 { margin-top: 16px; }
+    .mt-6 { margin-top: 24px; }
+    .text-center { text-align: center; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 480px) { .two-col { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
 
 <!-- ヘッダー -->
-<header>
-  <div class="logo">W</div>
-  <h1>Well Body 商談準備ツール<span>β</span></h1>
+<header class="header">
+  <div class="header-logo">W</div>
+  <div class="header-title">Well Body 商談準備ツール</div>
 </header>
 
 <!-- タブナビ -->
 <nav class="tab-nav">
-  <button class="tab-btn active" onclick="switchTab('prep')">🗂 商談準備</button>
-  <button class="tab-btn" onclick="switchTab('feedback')">🎙 商談フィードバック</button>
-  <button class="tab-btn" onclick="switchTab('knowledge')">📚 ナレッジ</button>
+  <button class="tab-btn active" onclick="switchTab('prep')" id="tab-prep">
+    📋 商談準備
+  </button>
+  <button class="tab-btn" onclick="switchTab('feedback')" id="tab-feedback">
+    🎙️ 商談フィードバック
+  </button>
+  <button class="tab-btn" onclick="switchTab('knowledge')" id="tab-knowledge">
+    📚 ナレッジ
+  </button>
 </nav>
 
-<!-- ───────────── タブ①：商談準備 ───────────── -->
-<div id="tab-prep" class="tab-content active">
+<main class="main">
 
-  <!-- 入力フォーム -->
-  <div class="card">
-    <div class="card-title">📋 商談先情報の入力</div>
+  <!-- ═══════════════════════════════════════
+       タブ① 商談準備
+  ═══════════════════════════════════════ -->
+  <div class="tab-panel active" id="panel-prep">
 
-    <div class="row">
-      <div class="form-group">
-        <label>企業名<span class="required">*</span></label>
-        <input type="text" id="company-name" placeholder="例：株式会社○○物流" />
-      </div>
-      <div class="form-group">
-        <label>企業URL<span class="required">*</span></label>
-        <input type="url" id="company-url" placeholder="https://example.co.jp" />
+    <div class="section-header">
+      <div>
+        <div class="section-title">商談準備資料の生成</div>
+        <div class="section-sub">企業情報を入力して、商談に必要な4つの資料を自動生成します</div>
       </div>
     </div>
 
-    <div class="form-group">
-      <label>社長名 <span style="color:var(--text-sub); font-weight:400;">（任意・記事検索の精度が上がります）</span></label>
-      <input type="text" id="president-name" placeholder="例：山田 太郎" />
+    <div class="card">
+      <div class="card-title">企業情報の入力</div>
+
+      <div class="form-row">
+        <label>企業名 <span class="required">*</span></label>
+        <input type="text" id="company-name" placeholder="例：株式会社○○" />
+      </div>
+
+      <div class="form-row">
+        <label>企業URL <span class="required">*</span></label>
+        <input type="url" id="company-url" placeholder="例：https://example.co.jp" />
+      </div>
+
+      <div class="form-row">
+        <label>社長・担当者名（任意）</label>
+        <input type="text" id="president-name" placeholder="例：山田 太郎" />
+      </div>
+
+      <div class="form-row">
+        <label>アポ取得時に得た情報</label>
+        <textarea id="apo-info" placeholder="例：経営企画部の田中さん。従業員200名。健康経営に取り組み始めたばかりで、腰痛の訴えが多いとのこと。テレワーク中心で1日の大半がデスクワーク。"></textarea>
+      </div>
+
+      <div class="mt-4 text-center">
+        <button class="btn btn-primary btn-lg btn-block" onclick="generateReport()">
+          ✨ 商談準備資料を生成する
+        </button>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label>アポ取得時に得た情報</label>
-      <textarea id="apo-info" placeholder="例：&#10;担当者：田中さん（総務部長）&#10;課題感：腰痛持ちの社員が多く、最近1人休職した&#10;きっかけ：弊社チラシを見て&#10;従業員数：120名&#10;業種：物流・運送"></textarea>
+    <!-- ローディング -->
+    <div id="loading-prep" class="loading" style="display:none;">
+      <div class="spinner"></div>
+      <span id="loading-msg">企業サイトを解析中...</span>
     </div>
 
-    <div class="flex-end mt-8">
-      <button class="btn btn-primary" id="generate-btn" onclick="generateReport()">
-        ✨ 商談準備資料を生成する
+    <!-- 生成結果エリア -->
+    <div id="result-area" style="display:none;">
+      <div class="section-header mt-6">
+        <div>
+          <div class="section-title">生成結果</div>
+          <div class="section-sub" id="result-company-label"></div>
+        </div>
+        <button class="btn btn-outline" onclick="copyAll()">📋 全文コピー</button>
+      </div>
+
+      <div class="result-grid">
+        <div class="result-card">
+          <div class="result-card-header">
+            <div class="result-badge">①</div>
+            <div class="result-card-title">企業リサーチサマリー</div>
+          </div>
+          <div class="result-card-body" id="result-research">
+            <span class="result-empty">生成結果がここに表示されます</span>
+          </div>
+        </div>
+
+        <div class="result-card">
+          <div class="result-card-header">
+            <div class="result-badge">②</div>
+            <div class="result-card-title">キラートーク</div>
+          </div>
+          <div class="result-card-body" id="result-talk">
+            <span class="result-empty">生成結果がここに表示されます</span>
+          </div>
+        </div>
+
+        <div class="result-card">
+          <div class="result-card-header">
+            <div class="result-badge">③</div>
+            <div class="result-card-title">商談資料カスタマイズ指示</div>
+          </div>
+          <div class="result-card-body" id="result-material">
+            <span class="result-empty">生成結果がここに表示されます</span>
+          </div>
+        </div>
+
+        <div class="result-card">
+          <div class="result-card-header">
+            <div class="result-badge">④</div>
+            <div class="result-card-title">従業員向けチラシの骨子</div>
+          </div>
+          <div class="result-card-body" id="result-flyer">
+            <span class="result-empty">生成結果がここに表示されます</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /panel-prep -->
+
+
+  <!-- ═══════════════════════════════════════
+       タブ② 商談フィードバック
+  ═══════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-feedback">
+
+    <div class="section-header">
+      <div>
+        <div class="section-title">商談フィードバック</div>
+        <div class="section-sub">録音データをアップロードして、AIが商談を分析します</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">商談情報の入力</div>
+
+      <div class="form-row">
+        <label>企業名</label>
+        <input type="text" id="fb-company-name" placeholder="例：株式会社○○" />
+      </div>
+
+      <div class="two-col">
+        <div class="form-row">
+          <label>業種</label>
+          <input type="text" id="fb-industry" placeholder="例：IT・SaaS" />
+        </div>
+        <div class="form-row">
+          <label>商談日</label>
+          <input type="text" id="fb-meeting-date" placeholder="例：2026-04-03" />
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="form-row">
+          <label>アポ獲得経路</label>
+          <select id="fb-apo-route">
+            <option value="">選択してください</option>
+            <option value="テレアポ">テレアポ</option>
+            <option value="WEBマーケ">WEBマーケ</option>
+            <option value="オフラインマーケ">オフラインマーケ</option>
+            <option value="既存紹介">既存紹介</option>
+            <option value="紹介">紹介</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>担当者役職</label>
+          <input type="text" id="fb-contact-title" placeholder="例：総務部長" />
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="form-row">
+          <label>従業員数</label>
+          <input type="text" id="fb-employee-count" placeholder="例：200名" />
+        </div>
+        <div class="form-row">
+          <label>商談時間（分）</label>
+          <input type="number" id="fb-meeting-minutes" placeholder="例：60" min="0" style="width:100%;box-sizing:border-box;" />
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="form-row">
+          <label>フロー到達ステージ <span style="font-size:11px;color:#999;">（任意・自動推測）</span></label>
+          <select id="fb-flow-stage">
+            <option value="0">（AIに自動推測させる）</option>
+            <option value="1">STEP1：不信の払拭</option>
+            <option value="2">STEP2：不要の払拭</option>
+            <option value="3">STEP3：不適の払拭</option>
+            <option value="4">STEP4：クロージング</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>使った事例 <span style="font-size:11px;color:#999;">（任意・自動推測）</span></label>
+          <input type="text" id="fb-cases-used" placeholder="例：Renfro,SBI（カンマ区切り）" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>商談結果</label>
+        <div class="result-radio-group">
+          <div class="result-radio">
+            <input type="radio" name="fb-result" id="fb-win" value="win" />
+            <label for="fb-win">🎉 成約</label>
+          </div>
+          <div class="result-radio">
+            <input type="radio" name="fb-result" id="fb-hold" value="hold" checked />
+            <label for="fb-hold">⏳ 保留</label>
+          </div>
+          <div class="result-radio">
+            <input type="radio" name="fb-result" id="fb-loss" value="loss" />
+            <label for="fb-loss">❌ 失注</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>補足メモ</label>
+        <textarea id="fb-memo" placeholder="例：予算の話が出た。来月再提案のチャンスあり。担当者は前向きだが上長の承認が必要とのこと。"></textarea>
+      </div>
+    </div>
+
+    <!-- ボイレコアップロード -->
+    <div class="card">
+      <div class="card-title">録音ファイルのアップロード</div>
+
+      <div class="upload-area" id="upload-area"
+           onclick="document.getElementById('audio-file').click()"
+           ondragover="event.preventDefault(); this.classList.add('dragover')"
+           ondragleave="this.classList.remove('dragover')">
+        <input type="file" id="audio-file" accept="audio/*" style="display:none"
+               onchange="onFileSelected(this)" />
+        <div class="upload-icon">🎙️</div>
+        <div class="upload-text">
+          <strong>クリックしてファイルを選択</strong>、またはここにドラッグ
+        </div>
+        <div class="upload-hint">MP3, M4A, WAV, OGG など ／ 最大 25MB</div>
+      </div>
+
+      <div id="file-selected-area" style="display:none;">
+        <div class="file-selected">
+          <span>🎵</span>
+          <span id="file-selected-name"></span>
+          <span class="remove-file" onclick="removeFile()">✕</span>
+        </div>
+      </div>
+
+      <div class="mt-4 text-center">
+        <button class="btn btn-primary btn-lg btn-block" onclick="analyzeVoice()">
+          🔍 商談を分析する
+        </button>
+      </div>
+    </div>
+
+    <!-- メモアップロード -->
+    <div class="card">
+      <div class="card-title">商談メモのアップロード（PDF / テキスト）</div>
+
+      <div class="upload-area" id="memo-upload-area"
+           onclick="document.getElementById('memo-file').click()"
+           ondragover="event.preventDefault(); this.classList.add('dragover')"
+           ondragleave="this.classList.remove('dragover')"
+           ondrop="onMemoDrop(event)">
+        <input type="file" id="memo-file" accept=".pdf,.txt,.md" style="display:none"
+               onchange="onMemoFileSelected(this)" />
+        <div class="upload-icon">📄</div>
+        <div class="upload-text">
+          <strong>クリックしてファイルを選択</strong>、またはここにドラッグ
+        </div>
+        <div class="upload-hint">PDF, TXT, MD に対応 ／ 最大 20,000 文字</div>
+      </div>
+
+      <div id="memo-selected-area" style="display:none;">
+        <div class="file-selected">
+          <span>📄</span>
+          <span id="memo-selected-name"></span>
+          <span class="remove-file" onclick="removeMemoFile()">✕</span>
+        </div>
+      </div>
+
+      <div class="mt-4 text-center">
+        <button class="btn btn-primary btn-lg btn-block" onclick="analyzeMemo()">
+          🔍 メモを分析する
+        </button>
+      </div>
+    </div>
+
+    <!-- ローディング（ボイレコ） -->
+    <div id="loading-feedback" class="loading" style="display:none;">
+      <div class="spinner"></div>
+      <span>Whisperで文字起こし中… しばらくお待ちください</span>
+    </div>
+
+    <!-- ローディング（メモ） -->
+    <div id="loading-memo" class="loading" style="display:none;">
+      <div class="spinner"></div>
+      <span>Claude AIがメモを分析中… しばらくお待ちください</span>
+    </div>
+
+    <!-- フィードバック結果（ボイレコ） -->
+    <div id="feedback-result-area" style="display:none;">
+      <div class="feedback-result">
+        <div class="feedback-result-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <h3>📊 商談フィードバックレポート</h3>
+            <p id="fb-result-meta"></p>
+          </div>
+          <div id="voice-save-btn-wrap" style="display:none;flex-shrink:0;">
+            <button class="btn btn-primary" id="voice-save-btn" onclick="saveVoiceToKnowledge()">
+              💾 ナレッジに保存
+            </button>
+          </div>
+        </div>
+        <div class="feedback-result-body" id="feedback-result-body"></div>
+      </div>
+    </div>
+
+    <!-- メモ分析結果 -->
+    <div id="memo-result-area" style="display:none;">
+      <div class="feedback-result">
+        <div class="feedback-result-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <h3>📋 メモ分析レポート</h3>
+            <p id="memo-result-meta"></p>
+          </div>
+          <button class="btn btn-primary" id="save-knowledge-btn" onclick="saveToKnowledge()" style="flex-shrink:0;">
+            💾 ナレッジに保存
+          </button>
+        </div>
+        <div class="feedback-result-body">
+          <div id="memo-summary-section" style="margin-bottom:16px;"></div>
+
+          <!-- Hit（前向き発言） -->
+          <div id="memo-hits-section" style="display:none; margin-bottom:16px;">
+            <div style="font-weight:700; color:#4CAF7D; margin-bottom:8px; font-size:14px;">
+              ✅ Hit（前向き発言・刺さったポイント）
+            </div>
+            <div id="memo-hits-list"></div>
+          </div>
+
+          <!-- Miss（失注シグナル） -->
+          <div id="memo-misses-section" style="display:none; margin-bottom:16px;">
+            <div style="font-weight:700; color:#e05757; margin-bottom:8px; font-size:14px;">
+              ⚠️ Miss（失注シグナル・ネガティブ反応）
+            </div>
+            <div id="memo-misses-list"></div>
+          </div>
+
+          <!-- Objection（反論） -->
+          <div id="memo-objections-section" style="display:none; margin-bottom:16px;">
+            <div style="font-weight:700; color:#e09000; margin-bottom:8px; font-size:14px;">
+              💬 Objection（反論・懸念）
+            </div>
+            <div id="memo-objections-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /panel-feedback -->
+
+
+  <!-- ═══════════════════════════════════════
+       タブ③ ナレッジ
+  ═══════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-knowledge">
+
+    <div class="section-header">
+      <div>
+        <div class="section-title">ナレッジベース</div>
+        <div class="section-sub">商談フィードバックが蓄積されると自動的に追加されます</div>
+      </div>
+    </div>
+
+    <div class="knowledge-tabs">
+      <button class="knowledge-tab-btn" onclick="switchKnowledge(this, 'win')">
+        🏆 勝ちトーク集
+      </button>
+      <button class="knowledge-tab-btn" onclick="switchKnowledge(this, 'loss')">
+        📉 失注パターン集
+      </button>
+      <button class="knowledge-tab-btn active" onclick="switchKnowledge(this, 'all')">
+        📋 全件
       </button>
     </div>
-  </div>
 
-  <!-- 生成結果 -->
-  <div class="result-section" id="result-area">
-    <div class="section-heading">生成結果</div>
-
-    <!-- ① 企業リサーチサマリー -->
-    <div class="result-card">
-      <div class="result-card-header">
-        <div class="num">①</div>
-        <div class="title">企業リサーチサマリー</div>
-      </div>
-      <div class="result-card-body" id="result-research">
-        <div class="placeholder-text">
-          <span class="icon">🔍</span>
-          企業名とURLを入力して「生成する」を押してください
-        </div>
+    <!-- 勝ちトーク集（APIから動的に描画） -->
+    <div class="knowledge-panel" id="kpanel-win">
+      <div class="knowledge-empty">
+        <div class="knowledge-empty-icon">🏆</div>
+        <p>読み込み中...</p>
       </div>
     </div>
 
-    <!-- ② キラートーク -->
-    <div class="result-card">
-      <div class="result-card-header">
-        <div class="num">②</div>
-        <div class="title">キラートーク（業種別カスタマイズ）</div>
-      </div>
-      <div class="result-card-body" id="result-talk">
-        <div class="placeholder-text">
-          <span class="icon">💬</span>
-          商談フロー×業種に合わせたトークを生成します
-        </div>
+    <!-- 失注パターン集（APIから動的に描画） -->
+    <div class="knowledge-panel" id="kpanel-loss">
+      <div class="knowledge-empty">
+        <div class="knowledge-empty-icon">📉</div>
+        <p>読み込み中...</p>
       </div>
     </div>
 
-    <!-- ③ 商談資料カスタマイズ指示 -->
-    <div class="result-card">
-      <div class="result-card-header">
-        <div class="num">③</div>
-        <div class="title">商談資料カスタマイズ指示</div>
-      </div>
-      <div class="result-card-body" id="result-material">
-        <div class="placeholder-text">
-          <span class="icon">📊</span>
-          PPTスライドの優先順と見せ方を提案します
-        </div>
+    <!-- 全件（APIから動的に描画） -->
+    <div class="knowledge-panel active" id="kpanel-all">
+      <div class="knowledge-empty">
+        <div class="knowledge-empty-icon">📋</div>
+        <p>読み込み中...</p>
       </div>
     </div>
 
-    <!-- ④ チラシ骨子 -->
-    <div class="result-card">
-      <div class="result-card-header">
-        <div class="num">④</div>
-        <div class="title">従業員向けチラシの骨子</div>
+  </div><!-- /panel-knowledge -->
+
+</main>
+
+
+<!-- ═══════════════════════════════════════
+     詳細モーダル
+═══════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOnOverlay(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h2 id="modal-title"></h2>
+        <p id="modal-meta"></p>
       </div>
-      <div class="result-card-body" id="result-flyer">
-        <div class="placeholder-text">
-          <span class="icon">📄</span>
-          業種・働き方に合わせたキャッチコピー案を生成します
-        </div>
-      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
+    <div class="modal-body" id="modal-body"></div>
   </div>
 </div>
 
-<!-- ───────────── タブ②：商談フィードバック ───────────── -->
-<div id="tab-feedback" class="tab-content">
-
-  <!-- 商談結果 -->
-  <div class="card">
-    <div class="card-title">📝 商談結果の入力</div>
-
-    <div class="row">
-      <div class="form-group">
-        <label>商談先企業</label>
-        <input type="text" placeholder="例：株式会社○○物流" />
-      </div>
-      <div class="form-group">
-        <label>商談日</label>
-        <input type="text" placeholder="例：2026-04-01" />
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>商談結果</label>
-      <div class="result-select mt-8">
-        <div class="result-badge selected" onclick="selectResult(this, 'success')">✅ 成約（体験会確定）</div>
-        <div class="result-badge hold" onclick="selectResult(this, 'hold')">🕐 保留・検討中</div>
-        <div class="result-badge ng" onclick="selectResult(this, 'ng')">❌ NG</div>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>補足メモ（ボイレコで拾えなかった情報）</label>
-      <textarea placeholder="例：&#10;・社長が健康経営に前向きだった&#10;・予算は3月末まで使える&#10;・競合他社（○○）と比較中"></textarea>
-    </div>
-  </div>
-
-  <!-- ボイレコアップロード -->
-  <div class="card">
-    <div class="card-title">🎙 録音データのアップロード <span class="badge">Whisper文字起こし</span></div>
-
-    <div class="upload-area" onclick="document.getElementById('voice-upload').click()">
-      <span class="upload-icon">🎵</span>
-      <p><strong>クリックしてファイルを選択</strong>またはドラッグ＆ドロップ</p>
-      <p style="margin-top:6px; font-size:12px;">対応形式：MP3 / MP4 / M4A / WAV（最大500MB）</p>
-      <input type="file" id="voice-upload" accept=".mp3,.mp4,.m4a,.wav" style="display:none" />
-    </div>
-
-    <div class="flex-end mt-16">
-      <button class="btn btn-primary" onclick="analyzeVoice()">
-        🔍 分析する
-      </button>
-    </div>
-  </div>
-
-  <!-- 分析結果 -->
-  <div class="card">
-    <div class="card-title">📈 分析結果</div>
-    <div class="analysis-placeholder" id="feedback-result">
-      <span style="font-size:32px; display:block; margin-bottom:10px;">🎙</span>
-      <p style="color:var(--text-sub); font-size:13px;">録音データをアップロードして「分析する」を押してください</p>
-    </div>
-  </div>
-
-</div>
-
-<!-- ───────────── タブ③：ナレッジ ───────────── -->
-<div id="tab-knowledge" class="tab-content">
-
-  <div class="card">
-    <div class="card-title">📚 過去の商談データ</div>
-
-    <!-- フィルター -->
-    <div class="knowledge-filters">
-      <div class="filter-chip active">すべて</div>
-      <div class="filter-chip">✅ 成約</div>
-      <div class="filter-chip">🕐 保留</div>
-      <div class="filter-chip">❌ NG</div>
-      <div class="filter-chip">物流・運送</div>
-      <div class="filter-chip">製造業</div>
-      <div class="filter-chip">IT・デスクワーク</div>
-      <div class="filter-chip">医療・福祉</div>
-    </div>
-
-    <!-- テーブル -->
-    <div style="overflow-x:auto;">
-      <table class="knowledge-table">
-        <thead>
-          <tr>
-            <th>企業名</th>
-            <th>業種</th>
-            <th>従業員数</th>
-            <th>商談日</th>
-            <th>結果</th>
-            <th>キラートーク評価</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- サンプルデータ -->
-          <tr>
-            <td><strong>株式会社○○物流</strong></td>
-            <td>物流・運送</td>
-            <td>120名</td>
-            <td>2026-03-28</td>
-            <td><span class="status-badge status-success">成約</span></td>
-            <td>⭐⭐⭐⭐⭐</td>
-            <td><button class="btn btn-outline" style="padding:5px 12px; font-size:12px;">詳細</button></td>
-          </tr>
-          <tr>
-            <td><strong>△△製造株式会社</strong></td>
-            <td>製造業</td>
-            <td>80名</td>
-            <td>2026-03-25</td>
-            <td><span class="status-badge status-hold">保留</span></td>
-            <td>⭐⭐⭐</td>
-            <td><button class="btn btn-outline" style="padding:5px 12px; font-size:12px;">詳細</button></td>
-          </tr>
-          <tr>
-            <td><strong>□□システム株式会社</strong></td>
-            <td>IT・デスクワーク</td>
-            <td>45名</td>
-            <td>2026-03-20</td>
-            <td><span class="status-badge status-ng">NG</span></td>
-            <td>⭐⭐</td>
-            <td><button class="btn btn-outline" style="padding:5px 12px; font-size:12px;">詳細</button></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <p style="color:var(--text-sub); font-size:12px; margin-top:12px; text-align:right;">
-      ※ サンプルデータです。API連携後に実データが表示されます
-    </p>
-  </div>
-
-  <!-- ナレッジサマリー -->
-  <div class="card">
-    <div class="card-title">💡 業種別 刺さるパターン <span class="badge">ナレッジ蓄積中</span></div>
-    <div class="analysis-placeholder">
-      <span style="font-size:32px; display:block; margin-bottom:10px;">📊</span>
-      <p style="color:var(--text-sub); font-size:13px;">商談データが蓄積されると、業種別の「刺さるパターン」が自動生成されます</p>
-    </div>
-  </div>
-
-</div>
 
 <script>
-  // タブ切り替え
+  // ─── タブ切り替え ────────────────────────
   function switchTab(name) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
     document.getElementById('tab-' + name).classList.add('active');
-    event.currentTarget.classList.add('active');
+    // ナレッジタブを開いたらAPIから最新データを取得
+    if (name === 'knowledge') loadKnowledge();
   }
 
-  // 商談結果バッジの選択
-  function selectResult(el, type) {
-    document.querySelectorAll('.result-badge').forEach(b => b.classList.remove('selected'));
-    el.classList.add('selected');
-    // NG/保留はカラーを変えるため動的にclassを付与
-    el.classList.add(type === 'ng' ? 'ng' : type === 'hold' ? 'hold' : '');
+  // ─── ナレッジ：API取得＆描画 ───────────────
+  async function loadKnowledge() {
+    try {
+      const res     = await fetch('/knowledge');
+      const records = await res.json();
+      _knowledgeCache = records;   // モーダル用キャッシュも同時更新
+      renderKnowledge(records);
+    } catch (e) {
+      console.error('ナレッジ取得エラー:', e);
+    }
   }
 
-  // テキストを改行・段落を保ったHTMLに変換するユーティリティ
-  function textToHtml(text) {
-    if (!text) return '<span style="color:var(--text-sub);">（生成結果なし）</span>';
-    return text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\n\n+/g, '</p><p>')
-      .replace(/\n/g, '<br>')
-      .replace(/^/, '<p>')
-      .replace(/$/, '</p>');
+  function renderKnowledge(records) {
+    const wins   = records.filter(r => r.result === 'win');
+    const losses = records.filter(r => r.result === 'loss');
+
+    renderKnowledgePanel('kpanel-win',  wins,   true);
+    renderKnowledgePanel('kpanel-loss', losses, false);
+    renderKnowledgePanel('kpanel-all',  records, null);
   }
 
-  // 商談準備資料の生成（バックエンドAPIを呼び出す）
-  async function generateReport() {
-    const name      = document.getElementById('company-name').value.trim();
-    const url       = document.getElementById('company-url').value.trim();
-    const president = document.getElementById('president-name').value.trim();
-    const apoInfo   = document.getElementById('apo-info').value.trim();
-
-    if (!name || !url) {
-      alert('企業名とURLを入力してください');
+  function renderKnowledgePanel(panelId, records, isWin) {
+    const panel = document.getElementById(panelId);
+    if (!records.length) {
+      panel.innerHTML = '<div class="knowledge-empty"><div class="knowledge-empty-icon">' +
+        (isWin === true ? '🏆' : isWin === false ? '📉' : '📋') +
+        '</div><p>まだデータがありません</p></div>';
       return;
     }
 
-    // ボタンを無効化してローディング表示
-    const btn = document.getElementById('generate-btn');
-    btn.disabled = true;
-    btn.textContent = '⏳ 生成中…（30秒〜1分かかります）';
+    panel.innerHTML = records.map(r => {
+      const resultLabel = { win:'成約', hold:'保留', loss:'失注' }[r.result] || r.result;
+      const tagClass    = { win:'tag-win', hold:'tag-hold', loss:'tag-loss' }[r.result] || '';
+      const excerpt     = r.feedback
+        ? r.feedback.slice(0, 80) + (r.feedback.length > 80 ? '…' : '')
+        : '（フィードバックなし）';
+      const empCount    = r.employee_count ? `（従業員${r.employee_count}名）` : '';
+      return `
+        <div class="knowledge-card" onclick="openKnowledgeModal('${r.id}')">
+          <div class="knowledge-card-meta">
+            <span class="tag ${tagClass}">${resultLabel}</span>
+            ${r.industry ? `<span class="tag tag-industry">${escapeHtml(r.industry)}</span>` : ''}
+            <span class="knowledge-card-date">${r.meeting_date || ''}</span>
+          </div>
+          <div class="knowledge-card-company">${escapeHtml(r.company_name)}${empCount}</div>
+          <div class="knowledge-card-excerpt">${escapeHtml(excerpt)}</div>
+        </div>`;
+    }).join('');
+  }
 
-    const loadingHtml = '<div class="placeholder-text"><span class="icon">⏳</span>生成中...</div>';
-    ['result-research','result-talk','result-material','result-flyer'].forEach(id => {
-      document.getElementById(id).innerHTML = loadingHtml;
-    });
+  // ナレッジ詳細モーダル（APIデータ用）
+  let _knowledgeCache = [];
+  async function openKnowledgeModal(id) {
+    // キャッシュがなければ再取得
+    if (!_knowledgeCache.length) {
+      try {
+        const res = await fetch('/knowledge');
+        _knowledgeCache = await res.json();
+      } catch { return; }
+    }
+    const r = _knowledgeCache.find(x => x.id === id);
+    if (!r) return;
+
+    const resultLabel = { win:'成約', hold:'保留', loss:'失注' }[r.result] || r.result;
+    document.getElementById('modal-title').textContent =
+      r.company_name || '（企業名なし）';
+    document.getElementById('modal-meta').textContent =
+      [resultLabel, r.industry, r.employee_count ? r.employee_count + '名' : '', r.meeting_date]
+        .filter(Boolean).join(' ／ ');
+
+    let bodyHtml = '';
+    if (r.feedback) {
+      bodyHtml += '<div class="modal-text">' + escapeHtml(r.feedback) + '</div>';
+    }
+    if (r.hits?.length) {
+      bodyHtml += '<div style="font-weight:700;color:#4CAF7D;margin:12px 0 6px;">✅ Hit</div>';
+      bodyHtml += r.hits.map(h =>
+        `<div style="background:#f0faf4;border-left:4px solid #4CAF7D;border-radius:6px;padding:8px 12px;margin-bottom:6px;font-size:13px;">
+          <em>"${escapeHtml(h.quote||'')}"</em><br><span style="color:#555;">${escapeHtml(h.reason||'')}</span>
+        </div>`).join('');
+    }
+    if (r.misses?.length) {
+      bodyHtml += '<div style="font-weight:700;color:#e05757;margin:12px 0 6px;">⚠️ Miss</div>';
+      bodyHtml += r.misses.map(m =>
+        `<div style="background:#fff5f5;border-left:4px solid #e05757;border-radius:6px;padding:8px 12px;margin-bottom:6px;font-size:13px;">
+          <em>"${escapeHtml(m.quote||'')}"</em><br><span style="color:#555;">${escapeHtml(m.reason||'')}</span>
+        </div>`).join('');
+    }
+    if (r.objections?.length) {
+      bodyHtml += '<div style="font-weight:700;color:#e09000;margin:12px 0 6px;">💬 Objection</div>';
+      bodyHtml += r.objections.map(o =>
+        `<div style="background:#fffbf0;border-left:4px solid #e09000;border-radius:6px;padding:8px 12px;margin-bottom:6px;font-size:13px;">
+          <em>"${escapeHtml(o.quote||'')}"</em><br><span style="color:#555;">${escapeHtml(o.reason||'')}</span>
+          ${o.reply ? '<br><span style="color:#4CAF7D;font-size:12px;">切り返し：' + escapeHtml(o.reply) + '</span>' : ''}
+        </div>`).join('');
+    }
+    if (!bodyHtml) bodyHtml = '<p style="color:#999;">詳細情報なし</p>';
+
+    document.getElementById('modal-body').innerHTML = bodyHtml;
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+
+  // ページ読み込み時にナレッジキャッシュを更新する（openKnowledgeModal用）
+  fetch('/knowledge').then(r => r.json()).then(d => { _knowledgeCache = d; }).catch(() => {});
+
+  // ─── ナレッジ内タブ切り替え ──────────────
+  function switchKnowledge(btn, name) {
+    document.querySelectorAll('.knowledge-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.knowledge-tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('kpanel-' + name).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  // ─── 商談準備：生成ボタン ─────────────────
+  async function generateReport() {
+    const companyName   = document.getElementById('company-name').value.trim();
+    const companyUrl    = document.getElementById('company-url').value.trim();
+    const presidentName = document.getElementById('president-name').value.trim();
+    const apoInfo       = document.getElementById('apo-info').value.trim();
+
+    if (!companyName || !companyUrl) {
+      alert('企業名とURLは必須です');
+      return;
+    }
+
+    document.getElementById('loading-prep').style.display = 'flex';
+    document.getElementById('result-area').style.display  = 'none';
+
+    // ローディングメッセージをローテーション
+    const msgs = ['企業サイトを解析中...', 'ニュース記事を検索中...', 'Claude AIが生成中...', 'もう少しお待ちください...'];
+    let i = 0;
+    const interval = setInterval(() => {
+      document.getElementById('loading-msg').textContent = msgs[Math.min(i++, msgs.length - 1)];
+    }, 5000);
 
     try {
-      const resp = await fetch('/generate', {
-        method: 'POST',
+      const res  = await fetch('/generate', {
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          company_name:    name,
-          company_url:     url,
-          president_name:  president,
-          apo_info:        apoInfo,
+        body:    JSON.stringify({
+          company_name:   companyName,
+          company_url:    companyUrl,
+          president_name: presidentName,
+          apo_info:       apoInfo,
         }),
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'サーバーエラー');
 
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({ detail: resp.statusText }));
-        throw new Error(err.detail || '生成に失敗しました');
-      }
+      document.getElementById('result-company-label').textContent = companyName;
+      document.getElementById('result-research').textContent  = data.research  || '（生成結果なし）';
+      document.getElementById('result-talk').textContent      = data.talk      || '（生成結果なし）';
+      document.getElementById('result-material').textContent  = data.material  || '（生成結果なし）';
+      document.getElementById('result-flyer').textContent     = data.flyer     || '（生成結果なし）';
+      document.getElementById('result-area').style.display    = 'block';
 
-      const data = await resp.json();
-
-      // 結果を各カードに表示
-      document.getElementById('result-research').innerHTML = textToHtml(data.research);
-      document.getElementById('result-talk').innerHTML     = textToHtml(data.talk);
-      document.getElementById('result-material').innerHTML = textToHtml(data.material);
-      document.getElementById('result-flyer').innerHTML    = textToHtml(data.flyer);
-
-    } catch (e) {
-      ['result-research','result-talk','result-material','result-flyer'].forEach(id => {
-        document.getElementById(id).innerHTML =
-          `<p style="color:#e05555; font-size:13px;">❌ エラー: ${e.message}</p>`;
-      });
+    } catch (err) {
+      alert('エラー：' + err.message);
     } finally {
-      // ボタンを元に戻す
-      btn.disabled = false;
-      btn.textContent = '✨ 商談準備資料を生成する';
+      clearInterval(interval);
+      document.getElementById('loading-prep').style.display = 'none';
     }
   }
 
-  // 音声分析（ダミー）
-  function analyzeVoice() {
-    const upload = document.getElementById('voice-upload');
-    if (!upload.files.length) {
-      alert('録音ファイルをアップロードしてください');
+  // ─── 全文コピー ────────────────────────
+  function copyAll() {
+    const sections = [
+      ['result-research', '① 企業リサーチサマリー'],
+      ['result-talk',     '② キラートーク'],
+      ['result-material', '③ 商談資料カスタマイズ指示'],
+      ['result-flyer',    '④ 従業員向けチラシの骨子'],
+    ];
+    const text = sections.map(([id, title]) =>
+      title + '\n' + document.getElementById(id).textContent
+    ).join('\n\n');
+    navigator.clipboard.writeText(text).then(() => alert('コピーしました'));
+  }
+
+  // ─── ファイル選択 ────────────────────────
+  function onFileSelected(input) {
+    const file = input.files[0];
+    if (!file) return;
+    document.getElementById('upload-area').style.display = 'none';
+    document.getElementById('file-selected-area').style.display = 'block';
+    document.getElementById('file-selected-name').textContent = file.name;
+  }
+  function removeFile() {
+    document.getElementById('audio-file').value = '';
+    document.getElementById('upload-area').style.display = 'block';
+    document.getElementById('file-selected-area').style.display = 'none';
+  }
+
+  // ─── フィードバック：ボイレコ分析 ───────────
+  let _voiceAnalysis    = null;
+  let _voiceCompanyName = '';
+  let _voiceResult      = '';
+
+  async function analyzeVoice() {
+    const fileInput      = document.getElementById('audio-file');
+    const companyName    = document.getElementById('fb-company-name').value.trim();
+    const industry       = document.getElementById('fb-industry').value.trim();
+    const employeeCount  = document.getElementById('fb-employee-count').value.trim();
+    const meetingDate    = document.getElementById('fb-meeting-date').value.trim();
+    const resultVal      = document.querySelector('input[name="fb-result"]:checked')?.value || 'hold';
+    const memo           = document.getElementById('fb-memo').value.trim();
+    const apoRoute       = document.getElementById('fb-apo-route').value;
+    const contactTitle   = document.getElementById('fb-contact-title').value.trim();
+    const meetingMinutes = document.getElementById('fb-meeting-minutes').value.trim();
+    const flowStage      = document.getElementById('fb-flow-stage').value;
+    const casesUsed      = document.getElementById('fb-cases-used').value.trim();
+
+    if (!fileInput.files[0]) {
+      alert('録音ファイルを選択してください');
       return;
     }
-    document.getElementById('feedback-result').innerHTML =
-      '<div class="placeholder-text"><span class="icon">⏳</span>文字起こし・分析中...</div>';
-    setTimeout(() => {
-      document.getElementById('feedback-result').innerHTML = `
-        <p style="font-size:13px; line-height:2; color:var(--text-sub); text-align:center; padding:16px 0;">
-          ⚠️ <strong style="color:var(--text);">API未連携</strong>のため、ここに分析結果が表示されます<br>
-          <span>（商談フロー評価 / 刺さった発言 / 改善点 / 次のアクション提案）</span>
-        </p>`;
-    }, 1000);
+
+    const resultLabel = { win:'成約', hold:'保留', loss:'失注' }[resultVal];
+    document.getElementById('loading-feedback').style.display     = 'flex';
+    document.getElementById('feedback-result-area').style.display = 'none';
+
+    const formData = new FormData();
+    formData.append('audio',            fileInput.files[0]);
+    formData.append('company_name',     companyName);
+    formData.append('industry',         industry);
+    formData.append('employee_count',   employeeCount);
+    formData.append('meeting_date',     meetingDate);
+    formData.append('result',           resultVal);
+    formData.append('memo',             memo);
+    formData.append('apo_route',        apoRoute);
+    formData.append('contact_title',    contactTitle);
+    formData.append('meeting_minutes',  meetingMinutes);
+    formData.append('flow_stage',       flowStage !== '0' ? flowStage : '');
+    formData.append('cases_used',       casesUsed);
+
+    try {
+      const res  = await fetch('/analyze-voice', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'サーバーエラー');
+
+      _voiceAnalysis    = data.analysis || { feedback: data.feedback };
+      _voiceCompanyName = companyName;
+      _voiceResult      = resultVal;
+
+      const a = _voiceAnalysis;
+
+      // メタ情報
+      document.getElementById('fb-result-meta').textContent =
+        (companyName || '（企業名未入力）') + ' ／ ' + (meetingDate || '日付未入力') + ' ／ ' + resultLabel;
+
+      // 本文
+      let html = '<div style="white-space:pre-wrap;line-height:1.8;font-size:13px;margin-bottom:16px;">'
+        + escapeHtml(a.feedback || '（フィードバックなし）') + '</div>';
+
+      // スコアカード
+      if (a.score || a.flow_stage || a.temperature) {
+        html += `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+          ${a.score ? `<div style="background:#f0faf4;border-radius:8px;padding:10px 16px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#4CAF7D;">${a.score}</div><div style="font-size:11px;color:#888;">商談スコア</div></div>` : ''}
+          ${a.flow_stage ? `<div style="background:#f0f4ff;border-radius:8px;padding:10px 16px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#5571e0;">STEP${a.flow_stage}</div><div style="font-size:11px;color:#888;">到達ステージ</div></div>` : ''}
+          ${a.temperature ? `<div style="background:#fff8f0;border-radius:8px;padding:10px 16px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#e09000;">${a.temperature}</div><div style="font-size:11px;color:#888;">先方温度感</div></div>` : ''}
+          ${a.meeting_minutes ? `<div style="background:#f5f5f5;border-radius:8px;padding:10px 16px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#555;">${a.meeting_minutes}分</div><div style="font-size:11px;color:#888;">商談時間</div></div>` : ''}
+        </div>`;
+      }
+
+      if (a.next_action) {
+        html += `<div style="background:#e8f5e9;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;">
+          <strong>💡 次回アクション：</strong>${escapeHtml(a.next_action)}</div>`;
+      }
+
+      // Hit/Miss/Objection
+      if (a.hits?.length) {
+        html += '<div style="font-weight:700;color:#4CAF7D;margin-bottom:6px;">✅ Hit</div>';
+        html += a.hits.map(h =>
+          `<div style="background:#f0faf4;border-left:4px solid #4CAF7D;border-radius:6px;padding:8px 12px;margin-bottom:6px;font-size:13px;">
+            <em>"${escapeHtml(h.quote||'')}"</em><br><span style="color:#555;">${escapeHtml(h.reason||'')}</span></div>`
+        ).join('');
+      }
+      if (a.misses?.length) {
+        html += '<div style="font-weight:700;color:#e05757;margin:10px 0 6px;">⚠️ Miss</div>';
+        html += a.misses.map(m =>
+          `<div style="background:#fff5f5;border-left:4px solid #e05757;border-radius:6px;padding:8px 12px;margin-bottom:6px;font-size:13px;">
+            <em>"${escapeHtml(m.quote||'')}"</em><br><span style="color:#555;">${escapeHtml(m.reason||'')}</span></div>`
+        ).join('');
+      }
+      if (a.objections?.length) {
+        html += '<div style="font-weight:700;color:#e09000;margin:10px 0 6px;">💬 Objection</div>';
+        html += a.objections.map(o =>
+          `<div style="background:#fffbf0;border-left:4px solid #e09000;border-radius:6px;padding:8px 12px;margin-bottom:6px;font-size:13px;">
+            <em>"${escapeHtml(o.quote||'')}"</em><br><span style="color:#555;">${escapeHtml(o.reason||'')}</span>
+            ${o.reply ? '<br><span style="color:#4CAF7D;font-size:12px;">切り返し：' + escapeHtml(o.reply) + '</span>' : ''}</div>`
+        ).join('');
+      }
+
+      document.getElementById('feedback-result-body').innerHTML = html;
+
+      // ナレッジ保存ボタンを表示
+      document.getElementById('voice-save-btn-wrap').style.display = 'block';
+      document.getElementById('feedback-result-area').style.display = 'block';
+
+    } catch (err) {
+      alert('エラー：' + err.message);
+    } finally {
+      document.getElementById('loading-feedback').style.display = 'none';
+    }
   }
 
-  // フィルターチップ
-  document.querySelectorAll('.filter-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-    });
-  });
+  // ─── ボイレコ分析結果をナレッジに保存 ─────
+  async function saveVoiceToKnowledge() {
+    if (!_voiceAnalysis) return;
+    const btn = document.getElementById('voice-save-btn');
+    btn.disabled = true;
+    btn.textContent = '保存中...';
+
+    const a = _voiceAnalysis;
+    const payload = {
+      company_name:     _voiceCompanyName,
+      industry:         document.getElementById('fb-industry').value.trim(),
+      employee_count:   document.getElementById('fb-employee-count').value.trim(),
+      meeting_date:     document.getElementById('fb-meeting-date').value.trim(),
+      result:           _voiceResult,
+      apo_route:        document.getElementById('fb-apo-route').value,
+      contact_title:    document.getElementById('fb-contact-title').value.trim(),
+      memo:             document.getElementById('fb-memo').value.trim(),
+      feedback:         a.feedback         || '',
+      meeting_minutes:  a.meeting_minutes  || 0,
+      flow_stage:       a.flow_stage       || 0,
+      cases_used:       a.cases_used       || '',
+      loss_category:    a.loss_category    || '',
+      score:            a.score            || 0,
+      temperature:      a.temperature      || '',
+      next_action:      a.next_action      || '',
+      total_utterances: a.total_utterances || 0,
+      hits:             a.hits             || [],
+      misses:           a.misses           || [],
+      objections:       a.objections       || [],
+    };
+
+    try {
+      const res  = await fetch('/knowledge', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || '保存失敗');
+      alert('✅ ナレッジに保存しました！');
+      btn.textContent = '✅ 保存済み';
+    } catch (err) {
+      alert('エラー：' + err.message);
+      btn.disabled = false;
+      btn.textContent = '💾 ナレッジに保存';
+    }
+  }
+
+  // ─── メモファイル選択 ────────────────────────
+  function onMemoFileSelected(input) {
+    const file = input.files[0];
+    if (!file) return;
+    document.getElementById('memo-upload-area').style.display = 'none';
+    document.getElementById('memo-selected-area').style.display = 'block';
+    document.getElementById('memo-selected-name').textContent = file.name;
+  }
+  function onMemoDrop(event) {
+    event.preventDefault();
+    document.getElementById('memo-upload-area').classList.remove('dragover');
+    const file = event.dataTransfer.files[0];
+    if (!file) return;
+    const input = document.getElementById('memo-file');
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    onMemoFileSelected(input);
+  }
+  function removeMemoFile() {
+    document.getElementById('memo-file').value = '';
+    document.getElementById('memo-upload-area').style.display = 'block';
+    document.getElementById('memo-selected-area').style.display = 'none';
+  }
+
+  // ─── メモ分析 ─────────────────────────────
+  // 現在の分析結果を一時保持（ナレッジ保存用）
+  let _memoAnalysis = null;
+  let _memoCompanyName = '';
+  let _memoResult = '';
+
+  async function analyzeMemo() {
+    const fileInput      = document.getElementById('memo-file');
+    const companyName    = document.getElementById('fb-company-name').value.trim();
+    const industry       = document.getElementById('fb-industry').value.trim();
+    const employeeCount  = document.getElementById('fb-employee-count').value.trim();
+    const meetingDate    = document.getElementById('fb-meeting-date').value.trim();
+    const resultVal      = document.querySelector('input[name="fb-result"]:checked')?.value || 'hold';
+    const apoRoute       = document.getElementById('fb-apo-route').value;
+    const contactTitle   = document.getElementById('fb-contact-title').value.trim();
+    const meetingMinutes = document.getElementById('fb-meeting-minutes').value.trim();
+    const flowStage      = document.getElementById('fb-flow-stage').value;
+    const casesUsed      = document.getElementById('fb-cases-used').value.trim();
+
+    if (!fileInput.files[0]) {
+      alert('メモファイルを選択してください（PDF または テキスト）');
+      return;
+    }
+
+    // ローディング表示
+    document.getElementById('loading-memo').style.display      = 'flex';
+    document.getElementById('memo-result-area').style.display  = 'none';
+
+    const formData = new FormData();
+    formData.append('memo_file',       fileInput.files[0]);
+    formData.append('company_name',    companyName);
+    formData.append('result',          resultVal);
+    formData.append('industry',        industry);
+    formData.append('employee_count',  employeeCount);
+    formData.append('meeting_date',    meetingDate);
+    formData.append('apo_route',       apoRoute);
+    formData.append('contact_title',   contactTitle);
+    formData.append('meeting_minutes', meetingMinutes);
+    formData.append('flow_stage',      flowStage !== '0' ? flowStage : '');
+    formData.append('cases_used',      casesUsed);
+
+    try {
+      const res  = await fetch('/analyze-memo', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.detail || 'サーバーエラー');
+      }
+
+      _memoAnalysis    = data.analysis;
+      _memoCompanyName = companyName;
+      _memoResult      = resultVal;
+
+      renderMemoResult(companyName, resultVal, data.analysis);
+
+    } catch (err) {
+      alert('エラー：' + err.message);
+    } finally {
+      document.getElementById('loading-memo').style.display = 'none';
+    }
+  }
+
+  function renderMemoResult(companyName, resultVal, analysis) {
+    const resultLabel = { win:'成約', hold:'保留', loss:'失注' }[resultVal] || resultVal;
+    const meetingDate = document.getElementById('fb-meeting-date').value.trim();
+    document.getElementById('memo-result-meta').textContent =
+      (companyName || '（企業名未入力）') + (meetingDate ? ' ／ ' + meetingDate : '') + ' ／ ' + resultLabel;
+
+    // サマリーセクション（音声分析と統一した表示）
+    let summaryHtml = '';
+
+    // フィードバック本文
+    if (analysis.feedback) {
+      summaryHtml += '<div style="white-space:pre-wrap;line-height:1.8;font-size:13px;margin-bottom:16px;">'
+        + escapeHtml(analysis.feedback) + '</div>';
+    }
+
+    // スコアカード（音声分析と同じレイアウト）
+    if (analysis.score || analysis.flow_stage || analysis.temperature || analysis.meeting_minutes) {
+      summaryHtml += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">';
+      if (analysis.score) summaryHtml += `<div style="background:#f0faf4;border-radius:8px;padding:10px 16px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#4CAF7D;">${analysis.score}</div><div style="font-size:11px;color:#888;">商談スコア</div></div>`;
+      if (analysis.flow_stage) summaryHtml += `<div style="background:#f0f4ff;border-radius:8px;padding:10px 16px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#5571e0;">STEP${analysis.flow_stage}</div><div style="font-size:11px;color:#888;">到達ステージ</div></div>`;
+      if (analysis.temperature) summaryHtml += `<div style="background:#fff8f0;border-radius:8px;padding:10px 16px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#e09000;">${analysis.temperature}</div><div style="font-size:11px;color:#888;">先方温度感</div></div>`;
+      if (analysis.meeting_minutes) summaryHtml += `<div style="background:#f5f5f5;border-radius:8px;padding:10px 16px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#555;">${analysis.meeting_minutes}分</div><div style="font-size:11px;color:#888;">商談時間</div></div>`;
+      summaryHtml += '</div>';
+    }
+
+    // 次回アクション
+    if (analysis.next_action) {
+      summaryHtml += `<div style="background:#e8f5e9;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;"><strong>💡 次回アクション：</strong>${escapeHtml(analysis.next_action)}</div>`;
+    }
+
+    // 失注理由カテゴリ
+    if (analysis.loss_category) {
+      summaryHtml += `<div style="background:#fff3cd;border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:13px;"><strong>📍 失注カテゴリ</strong>：${escapeHtml(analysis.loss_category)}</div>`;
+    }
+
+    // 使った事例
+    if (analysis.cases_used) {
+      summaryHtml += `<div style="background:#f5f5f5;border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:13px;"><strong>📋 使った事例</strong>：${escapeHtml(analysis.cases_used)}</div>`;
+    }
+
+    document.getElementById('memo-summary-section').innerHTML = summaryHtml;
+
+    // Hit カード
+    const hits = analysis.hits || [];
+    if (hits.length > 0) {
+      document.getElementById('memo-hits-section').style.display = 'block';
+      document.getElementById('memo-hits-list').innerHTML = hits.map(h =>
+        `<div style="background:#f0faf4; border-left:4px solid #4CAF7D; border-radius:6px; padding:10px 14px; margin-bottom:8px; font-size:13px; line-height:1.7;">
+          <div style="font-style:italic; color:#2d7a56; margin-bottom:4px;">"${escapeHtml(h.quote || '')}"</div>
+          <div style="color:#555;">${escapeHtml(h.reason || '')}</div>
+        </div>`
+      ).join('');
+    }
+
+    // Miss カード
+    const misses = analysis.misses || [];
+    if (misses.length > 0) {
+      document.getElementById('memo-misses-section').style.display = 'block';
+      document.getElementById('memo-misses-list').innerHTML = misses.map(m =>
+        `<div style="background:#fff5f5; border-left:4px solid #e05757; border-radius:6px; padding:10px 14px; margin-bottom:8px; font-size:13px; line-height:1.7;">
+          <div style="font-style:italic; color:#a83333; margin-bottom:4px;">"${escapeHtml(m.quote || '')}"</div>
+          <div style="color:#555;">${escapeHtml(m.reason || '')}</div>
+        </div>`
+      ).join('');
+    }
+
+    // Objection カード
+    const objections = analysis.objections || [];
+    if (objections.length > 0) {
+      document.getElementById('memo-objections-section').style.display = 'block';
+      document.getElementById('memo-objections-list').innerHTML = objections.map(o =>
+        `<div style="background:#fffbf0; border-left:4px solid #e09000; border-radius:6px; padding:10px 14px; margin-bottom:8px; font-size:13px; line-height:1.7;">
+          <div style="font-style:italic; color:#a06000; margin-bottom:4px;">"${escapeHtml(o.quote || '')}"</div>
+          <div style="color:#555;">${escapeHtml(o.reason || '')}</div>
+          ${o.reply ? '<div style="margin-top:6px; color:#4CAF7D; font-size:12px;"><strong>切り返し：</strong>' + escapeHtml(o.reply) + '</div>' : ''}
+        </div>`
+      ).join('');
+    }
+
+    document.getElementById('memo-result-area').style.display = 'block';
+  }
+
+  // ─── ナレッジ保存 ─────────────────────────
+  async function saveToKnowledge() {
+    if (!_memoAnalysis) return;
+
+    const btn = document.getElementById('save-knowledge-btn');
+    btn.disabled = true;
+    btn.textContent = '保存中...';
+
+    const a = _memoAnalysis;
+    const payload = {
+      company_name:     _memoCompanyName,
+      industry:         document.getElementById('fb-industry').value.trim(),
+      employee_count:   document.getElementById('fb-employee-count').value.trim(),
+      meeting_date:     document.getElementById('fb-meeting-date').value.trim(),
+      result:           _memoResult,
+      apo_route:        document.getElementById('fb-apo-route').value,
+      contact_title:    document.getElementById('fb-contact-title').value.trim(),
+      memo:             document.getElementById('fb-memo').value.trim(),
+      feedback:         a.feedback         || '',
+      meeting_minutes:  a.meeting_minutes  || 0,
+      flow_stage:       a.flow_stage       || 0,
+      cases_used:       a.cases_used       || '',
+      loss_category:    a.loss_category    || '',
+      score:            a.score            || 0,
+      temperature:      a.temperature      || '',
+      next_action:      a.next_action      || '',
+      total_utterances: a.total_utterances || 0,
+      hits:             a.hits             || [],
+      misses:           a.misses           || [],
+      objections:       a.objections       || [],
+    };
+
+    try {
+      const res  = await fetch('/knowledge', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || '保存失敗');
+      alert('✅ ナレッジに保存しました！');
+      btn.textContent = '✅ 保存済み';
+    } catch (err) {
+      alert('エラー：' + err.message);
+      btn.disabled = false;
+      btn.textContent = '💾 ナレッジに保存';
+    }
+  }
+
+  // ─── モーダル ───────────────────────────
+  const SAMPLE = {
+    win1: {
+      title: '株式会社テックビジョン',
+      meta:  '成約 ／ IT・SaaS ／ 従業員250名 ／ 2026-03-28',
+      body:  `【刺さったポイント】
+P17の損失試算スライド（1人75万円/年）を見せた瞬間に担当者の表情が変わった。「うちの会社でも計算できますか？」と自ら質問してきた。
+
+【効果的だったトーク】
+「健康経営認定を取っている会社さんは、次のステップとして"量"から"質"に移行することが多いですね」という一言でニーズを引き出せた。
+
+【クロージングのタイミング】
+STEP3（不適の払拭）が終わった直後、間を置かずに体験会の日程を提案。「いつがご都合よいですか？」の一言で即日決定。
+
+【次回同業種へのアドバイス】
+IT系は健康経営に関心が高い。事前に「健康経営優良法人」認定の有無を確認してから商談に臨むとスムーズ。`
+    },
+    win2: {
+      title: '山田製作所',
+      meta:  '成約 ／ 製造業 ／ 従業員180名 ／ 2026-03-19',
+      body:  `【刺さったポイント】
+現場作業員の立ち仕事・前屈み姿勢にフォーカスしたトーク。「職人さんは身体が資本ですよね」が共感を引いた。
+
+【使った事例スライド】
+P38（Renfro）とP40（SBI）を順番に見せ、「こういった規模の会社さんで導入されています」と提示。
+
+【改善点】
+料金提示のタイミングが少し早かった。もう少し課題感を深掘りしてから価格の話に入るべきだった。`
+    },
+    loss1: {
+      title: '○○フードサービス',
+      meta:  '失注 ／ 飲食・小売 ／ 従業員400名 ／ 2026-03-15',
+      body:  `【失注理由】
+「コスト削減中なので今期は難しい」。予算感を最初に確認しなかったことが原因。
+
+【失敗パターン】
+アルバイト比率が高い業態に対して、正社員向けのトークをそのまま使ってしまった。対象範囲（正社員のみ？ or パート含む？）を事前に確認すべきだった。
+
+【次回同業種へのアドバイス】
+・初回で「今期の福利厚生予算はどのくらいですか？」と聞く
+・スモールスタート（10名〜）のプランを先に提示
+・トライアル無料体験を前面に出してハードルを下げる`
+    },
+    loss2: {
+      title: '△△不動産',
+      meta:  '失注 ／ 不動産 ／ 従業員120名 ／ 2026-03-08',
+      body:  `【失注理由】
+「他社も検討している」と言いながら返答なし。意思決定者（社長）が商談に不在だった。
+
+【失敗パターン】
+担当者（総務部長）は前向きだったが、最終決裁が社長のみというパターン。「体験会には責任者の方もご一緒にどうですか？」と誘導すべきだった。
+
+【次回同業種へのアドバイス】
+・初回商談前に決裁フローを確認する
+・「体験会に役員も参加できるか？」を早めに聞く
+・競合比較（P30）を早めに見せて差別化する`
+    },
+  };
+
+  function openModal(id) {
+    const d = SAMPLE[id];
+    if (!d) return;
+    document.getElementById('modal-title').textContent = d.title;
+    document.getElementById('modal-meta').textContent  = d.meta;
+    document.getElementById('modal-body').innerHTML =
+      '<div class="modal-text">' + escapeHtml(d.body) + '</div>';
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+  function closeModalOnOverlay(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  }
+
+  // XSS対策
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/\n/g, '<br>');
+  }
 </script>
+
 </body>
 </html>
