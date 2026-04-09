@@ -121,6 +121,10 @@ class SaveKnowledgeRequest(BaseModel):
     objections:      list[dict] = [] # 反論リスト
 
 
+class UpdateResultRequest(BaseModel):
+    result: str  # "win" または "loss"
+
+
 # ════════════════════════════════════════
 # ① 企業URLのスクレイピング
 # ════════════════════════════════════════
@@ -769,6 +773,112 @@ def push_to_hubspot(record: dict) -> None:
         logger.warning(f"HubSpot書き込み例外（無視して続行）: {e}")
 
 
+def update_sheet_result(record: dict, new_result: str) -> None:
+    """
+    Googleスプレッドシートの該当行の「結果」列を上書き更新する。
+    企業名 + 商談日でマッチングし、最初に見つかった行を更新する。
+    行の追加は行わない。
+    """
+    if not _HAS_GSPREAD:
+        return
+    if not GOOGLE_SERVICE_ACCOUNT_JSON or not GOOGLE_SHEETS_ID:
+        return
+
+    try:
+        scopes = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive",
+        ]
+        creds  = Credentials.from_service_account_file(GOOGLE_SERVICE_ACCOUNT_JSON, scopes=scopes)
+        client = gspread.authorize(creds)
+        sheet  = client.open_by_key(GOOGLE_SHEETS_ID).sheet1
+
+        result_label = {"win": "成約", "hold": "保留", "loss": "失注"}.get(new_result, new_result)
+        company_name = record.get("company_name", "")
+        meeting_date = record.get("meeting_date", "")
+
+        all_rows = sheet.get_all_values()
+        updated  = False
+        for i, row in enumerate(all_rows):
+            if i == 0:
+                continue  # ヘッダー行スキップ
+            # 企業名（列1）と商談日（列4）で一致判定（1-indexed で行番号は i+1）
+            if len(row) >= 4 and row[0] == company_name and row[3] == meeting_date:
+                sheet.update_cell(i + 1, 5, result_label)  # 5列目=結果
+                logger.info(f"Sheets result更新: {company_name} 行{i+1} → {result_label}")
+                updated = True
+                break  # 最初に一致した行だけ更新
+
+        if not updated:
+            logger.warning(f"Sheets: 該当行が見つかりません → {company_name} / {meeting_date}")
+
+    except Exception as e:
+        logger.warning(f"Sheets result更新失敗（無視して続行）: {e}")
+
+
+def update_hubspot_result(record: dict, new_result: str) -> None:
+    """
+    HubSpotの該当カンパニーの shodan_result プロパティのみを更新する。
+    企業名で検索し、見つかったカンパニーを PATCH する。
+    """
+    token = HUBSPOT_TOKEN
+    if not token:
+        return
+
+    company_name = record.get("company_name", "")
+    if not company_name:
+        return
+
+    hs_headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type":  "application/json",
+    }
+    base_url = "https://api.hubapi.com"
+
+    try:
+        # 企業名でカンパニーを検索
+        search_resp = requests.post(
+            f"{base_url}/crm/v3/objects/companies/search",
+            json={
+                "filterGroups": [{"filters": [{
+                    "propertyName": "name",
+                    "operator":     "EQ",
+                    "value":        company_name,
+                }]}],
+                "limit": 1,
+            },
+            headers=hs_headers,
+            timeout=10,
+        )
+        if not search_resp.ok:
+            logger.warning(f"HubSpot企業検索失敗（result更新）: {search_resp.status_code}")
+            return
+
+        results = search_resp.json().get("results", [])
+        if not results:
+            logger.info(f"HubSpot: 企業が見つかりません（result更新）→ {company_name}")
+            return
+
+        company_id = results[0]["id"]
+
+        # shodan_result のみを PATCH 更新
+        update_resp = requests.patch(
+            f"{base_url}/crm/v3/objects/companies/{company_id}",
+            json={"properties": {"shodan_result": new_result}},
+            headers=hs_headers,
+            timeout=10,
+        )
+        if update_resp.ok:
+            logger.info(f"HubSpot shodan_result更新: {company_name} → {new_result}")
+        else:
+            logger.warning(
+                f"HubSpot shodan_result更新失敗: {update_resp.status_code} - {update_resp.text[:200]}"
+            )
+
+    except Exception as e:
+        logger.warning(f"HubSpot shodan_result更新例外（無視して続行）: {e}")
+
+
 # ════════════════════════════════════════
 # APIエンドポイント
 # ════════════════════════════════════════
@@ -1014,6 +1124,48 @@ def get_knowledge(record_id: str):
         if r.get("id") == record_id:
             return JSONResponse(r)
     raise HTTPException(status_code=404, detail="記録が見つかりません")
+
+
+# ── 商談結果の更新（hold → win / loss）──
+@app.patch("/knowledge/{record_id}/result")
+def update_knowledge_result(record_id: str, req: UpdateResultRequest):
+    """
+    保留（hold）の商談記録を「契約（win）」または「失注（loss）」に更新する。
+
+    更新対象：
+    1. knowledge_db.json の result フィールド
+    2. Googleスプレッドシートの該当行「結果」列（行追加なし）
+    3. HubSpotカンパニーの shodan_result プロパティ
+
+    Sheets・HubSpot のどちらかが失敗しても処理を継続する。
+    """
+    if req.result not in ("win", "loss"):
+        raise HTTPException(status_code=400, detail="result は win または loss を指定してください")
+
+    records = load_knowledge_db()
+    target  = None
+    for r in records:
+        if r.get("id") == record_id:
+            target = r
+            break
+
+    if target is None:
+        raise HTTPException(status_code=404, detail="記録が見つかりません")
+
+    old_result     = target.get("result", "")
+    target["result"] = req.result
+
+    # ① knowledge_db.json を更新
+    save_knowledge_db(records)
+    logger.info(f"result更新: {target.get('company_name')} {old_result} → {req.result}")
+
+    # ② Googleスプレッドシートの該当行を更新（失敗しても続行）
+    update_sheet_result(target, req.result)
+
+    # ③ HubSpot の shodan_result を更新（失敗しても続行）
+    update_hubspot_result(target, req.result)
+
+    return JSONResponse({"status": "ok", "id": record_id, "result": req.result})
 
 
 # ════════════════════════════════════════

@@ -395,6 +395,43 @@
     .knowledge-empty-icon { font-size: 40px; margin-bottom: 12px; }
     .knowledge-empty p { font-size: 13px; line-height: 1.7; }
 
+    /* ── 結果更新ボタン（保留→契約/失注） ── */
+    .result-update-wrap {
+      margin-top: 10px;
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+    }
+    .btn-update-result {
+      font-size: 11px;
+      padding: 3px 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      color: var(--text-sub);
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-update-result:hover { border-color: var(--green); color: var(--green); }
+    .result-update-dropdown {
+      display: none;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .result-update-dropdown.open { display: flex; }
+    .rupdate-btn {
+      flex: 1;
+      padding: 6px 0;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: opacity 0.15s;
+    }
+    .rupdate-btn:hover { opacity: 0.8; }
+    .rupdate-win  { background: #dcfce7; color: #16a34a; }
+    .rupdate-loss { background: #fee2e2; color: #dc2626; }
+
     /* ── モーダル ──────────────────────── */
     .modal-overlay {
       position: fixed;
@@ -933,6 +970,15 @@
         ? r.feedback.slice(0, 80) + (r.feedback.length > 80 ? '…' : '')
         : '（フィードバックなし）';
       const empCount    = r.employee_count ? `（従業員${r.employee_count}名）` : '';
+      // 保留レコードのみ「結果を更新」ボタンを表示
+      const updateHtml = r.result === 'hold' ? `
+        <div class="result-update-wrap" onclick="event.stopPropagation()">
+          <button class="btn-update-result" onclick="showResultUpdate('${r.id}')">📝 結果を更新</button>
+          <div id="rupdate-${r.id}" class="result-update-dropdown">
+            <button class="rupdate-btn rupdate-win"  onclick="updateResult('${r.id}','win')">🎉 契約</button>
+            <button class="rupdate-btn rupdate-loss" onclick="updateResult('${r.id}','loss')">❌ 失注</button>
+          </div>
+        </div>` : '';
       return `
         <div class="knowledge-card" onclick="openKnowledgeModal('${r.id}')">
           <div class="knowledge-card-meta">
@@ -942,6 +988,7 @@
           </div>
           <div class="knowledge-card-company">${escapeHtml(r.company_name)}${empCount}</div>
           <div class="knowledge-card-excerpt">${escapeHtml(excerpt)}</div>
+          ${updateHtml}
         </div>`;
     }).join('');
   }
@@ -1000,6 +1047,41 @@
 
   // ページ読み込み時にナレッジキャッシュを更新する（openKnowledgeModal用）
   fetch('/knowledge').then(r => r.json()).then(d => { _knowledgeCache = d; }).catch(() => {});
+
+  // ─── 結果更新：ドロップダウン表示切り替え ───
+  function showResultUpdate(id) {
+    const dd = document.getElementById('rupdate-' + id);
+    // 他のドロップダウンをすべて閉じる
+    document.querySelectorAll('.result-update-dropdown').forEach(el => {
+      if (el !== dd) el.classList.remove('open');
+    });
+    dd.classList.toggle('open');
+  }
+
+  // ─── 結果更新：API呼び出し ──────────────
+  async function updateResult(id, newResult) {
+    // ボタンを無効化（二重送信防止）
+    const dd = document.getElementById('rupdate-' + id);
+    if (dd) dd.querySelectorAll('button').forEach(b => b.disabled = true);
+
+    try {
+      const res = await fetch(`/knowledge/${id}/result`, {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ result: newResult }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `ステータス ${res.status}`);
+      }
+      // 成功：一覧を再読み込み
+      await loadKnowledge();
+    } catch (e) {
+      alert('更新に失敗しました: ' + e.message);
+      // ボタンを再有効化
+      if (dd) dd.querySelectorAll('button').forEach(b => b.disabled = false);
+    }
+  }
 
   // ─── ナレッジ内タブ切り替え ──────────────
   function switchKnowledge(btn, name) {
