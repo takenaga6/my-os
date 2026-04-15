@@ -1227,17 +1227,21 @@ async def analyze_voice(
         return JSONResponse({"transcript": transcript, "analysis": {"feedback": raw}})
 
     return JSONResponse({
-        "transcript":     transcript,
-        "analysis":       analysis,
-        "feedback":       analysis.get("feedback", ""),   # 後方互換用
+        "transcript":          transcript,
+        "analysis":            analysis,
+        "feedback":            analysis.get("feedback", ""),   # 後方互換用
+        # カテゴリ（フロントからの保存リクエストで使用）
+        "hit_categories":      analysis.get("hit_categories", []),
+        "loss_signals":        analysis.get("loss_signals", []),
+        "objection_categories": analysis.get("objection_categories", []),
         # 手入力フィールドをそのままエコーバック（フロントで保存時に使用）
-        "company_name":   company_name,
-        "industry":       industry,
-        "employee_count": employee_count,
-        "meeting_date":   meeting_date,
-        "result":         result,
-        "apo_route":      apo_route,
-        "contact_title":  contact_title,
+        "company_name":        company_name,
+        "industry":            industry,
+        "employee_count":      employee_count,
+        "meeting_date":        meeting_date,
+        "result":              result,
+        "apo_route":           apo_route,
+        "contact_title":       contact_title,
     })
 
 
@@ -1302,16 +1306,20 @@ async def analyze_memo(
     logger.info(f"分析結果カテゴリ - hit_categories: {analysis.get('hit_categories', [])}, loss_signals: {analysis.get('loss_signals', [])}, objection_categories: {analysis.get('objection_categories', [])}")
 
     return JSONResponse({
-        "text":           text,
-        "analysis":       analysis,
+        "text":                text,
+        "analysis":            analysis,
+        # カテゴリ（フロントからの保存リクエストで使用）
+        "hit_categories":      analysis.get("hit_categories", []),
+        "loss_signals":        analysis.get("loss_signals", []),
+        "objection_categories": analysis.get("objection_categories", []),
         # 手入力フィールドをエコーバック（フロントで保存時に使用）
-        "company_name":   company_name,
-        "industry":       industry,
-        "employee_count": employee_count,
-        "meeting_date":   meeting_date,
-        "result":         result,
-        "apo_route":      apo_route,
-        "contact_title":  contact_title,
+        "company_name":        company_name,
+        "industry":            industry,
+        "employee_count":      employee_count,
+        "meeting_date":        meeting_date,
+        "result":              result,
+        "apo_route":           apo_route,
+        "contact_title":       contact_title,
     })
 
 

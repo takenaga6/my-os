@@ -1218,6 +1218,10 @@
       if (!res.ok) throw new Error(data.detail || 'サーバーエラー');
 
       _voiceAnalysis    = data.analysis || { feedback: data.feedback };
+      // トップレベルのカテゴリをanalysisにマージ（フォールバック）
+      _voiceAnalysis.hit_categories      = _voiceAnalysis.hit_categories      || data.hit_categories      || [];
+      _voiceAnalysis.loss_signals        = _voiceAnalysis.loss_signals        || data.loss_signals        || [];
+      _voiceAnalysis.objection_categories = _voiceAnalysis.objection_categories || data.objection_categories || [];
       _voiceCompanyName = companyName;
       _voiceResult      = resultVal;
 
@@ -1409,6 +1413,10 @@
       }
 
       _memoAnalysis    = data.analysis;
+      // トップレベルのカテゴリをanalysisにマージ（フォールバック）
+      _memoAnalysis.hit_categories      = _memoAnalysis.hit_categories      || data.hit_categories      || [];
+      _memoAnalysis.loss_signals        = _memoAnalysis.loss_signals        || data.loss_signals        || [];
+      _memoAnalysis.objection_categories = _memoAnalysis.objection_categories || data.objection_categories || [];
       _memoCompanyName = companyName;
       _memoResult      = resultVal;
 
