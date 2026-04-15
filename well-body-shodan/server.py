@@ -1299,6 +1299,8 @@ async def analyze_memo(
     except json.JSONDecodeError as e:
         raise HTTPException(status_code=500, detail=f"JSON解析失敗: {str(e)}")
 
+    logger.info(f"分析結果カテゴリ - hit_categories: {analysis.get('hit_categories', [])}, loss_signals: {analysis.get('loss_signals', [])}, objection_categories: {analysis.get('objection_categories', [])}")
+
     return JSONResponse({
         "text":           text,
         "analysis":       analysis,
@@ -1356,6 +1358,8 @@ def save_knowledge(req: SaveKnowledgeRequest):
 
     # HubSpotにも商談プロパティを書き込む（失敗しても続行）
     push_to_hubspot(new_record)
+
+    logger.info(f"カテゴリ確認 - hit_categories: {new_record.get('hit_categories', [])}, loss_signals: {new_record.get('loss_signals', [])}, objection_categories: {new_record.get('objection_categories', [])}")
 
     # Notionにも商談記録を書き込む（失敗しても続行）
     push_to_notion(new_record)
