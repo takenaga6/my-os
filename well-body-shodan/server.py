@@ -52,6 +52,8 @@ OPENAI_API_KEY     = os.environ.get("OPENAI_API_KEY", "")
 GOOGLE_CSE_API_KEY = os.environ.get("GOOGLE_CSE_API_KEY", "")
 GOOGLE_CSE_CX      = os.environ.get("GOOGLE_CSE_CX", "")
 HUBSPOT_TOKEN      = os.environ.get("HUBSPOT_TOKEN", "")
+NOTION_API_KEY     = os.environ.get("NOTION_API_KEY", "")
+NOTION_DB_ID       = os.environ.get("NOTION_DB_ID", "3432e3257cf480a7bd97e8d6af5c4553")
 
 # ── ナレッジDBのファイルパス ──
 # 商談記録をこのJSONファイルに保存する（DB不要・シンプル）
@@ -119,6 +121,9 @@ class SaveKnowledgeRequest(BaseModel):
     hits:            list[dict] = [] # 刺さった発言リスト
     misses:          list[dict] = [] # 失注シグナルリスト
     objections:      list[dict] = [] # 反論リスト
+    hit_categories:      list[str] = []
+    loss_signals:        list[str] = []
+    objection_categories: list[str] = []
 
 
 class UpdateResultRequest(BaseModel):
@@ -444,6 +449,9 @@ def build_feedback_prompt(
   "score": 商談全体の質を0〜100で採点（整数）,
   "temperature": "先方の購買温度感（高/中/低）",
   "next_action": "次回やるべき具体的アクション（1〜2文）",
+  "hit_categories": ["該当するものをすべて選択: 理学療法士の専門性 / メンタルケア / アスリート実績 / 業種別事例 / 健康経営への共感 / 取材での信頼構築"],
+  "loss_signals": ["該当するものをすべて選択: 持ち帰り/社内確認 / 決裁者に届いていない / 過去マッサージ失敗 / 来期/時期が合わない / ROI未提示 / ブリッジ不足 / クロージング未着手 / 雑談に流れた / ネクストアクション未着手"],
+  "objection_categories": ["該当するものをすべて選択: 費用感 / 公平性 / 時間的負担 / 必要性 / 運用負担 / スペース"],
   "total_utterances": 文字起こし中の先方発言数（整数。目安：句点や改行で区切って数える）,
   "hits": [
     {{"quote": "先方の前向きな発言を引用", "reason": "なぜ刺さったか1文"}}
@@ -550,6 +558,9 @@ def build_memo_analysis_prompt(
   "score": 商談全体の質を0〜100で採点（整数）,
   "temperature": "先方の購買温度感（高/中/低）",
   "next_action": "次回やるべき具体的アクション（1〜2文）",
+  "hit_categories": ["該当するものをすべて選択: 理学療法士の専門性 / メンタルケア / アスリート実績 / 業種別事例 / 健康経営への共感 / 取材での信頼構築"],
+  "loss_signals": ["該当するものをすべて選択: 持ち帰り/社内確認 / 決裁者に届いていない / 過去マッサージ失敗 / 来期/時期が合わない / ROI未提示 / ブリッジ不足 / クロージング未着手 / 雑談に流れた / ネクストアクション未着手"],
+  "objection_categories": ["該当するものをすべて選択: 費用感 / 公平性 / 時間的負担 / 必要性 / 運用負担 / スペース"],
   "total_utterances": テキスト中の先方発言数の推定（整数。不明なら0）,
   "hits": [
     {{"quote": "顧客の前向きな発言を引用", "reason": "なぜ刺さったか1文"}}
@@ -771,6 +782,254 @@ def push_to_hubspot(record: dict) -> None:
     except Exception as e:
         # HubSpot書き込み失敗してもナレッジDB/Sheets保存は止めない
         logger.warning(f"HubSpot書き込み例外（無視して続行）: {e}")
+
+
+def push_to_notion(record: dict) -> None:
+    """
+    商談記録をNotionの商談ナレッジDBにページとして追加する。
+    プロパティ＋ページ本文（Hits/Misses/Objections詳細）を書き込む。
+    失敗してもナレッジDB/Sheets保存は止めない。
+    """
+    if not NOTION_API_KEY or not NOTION_DB_ID:
+        logger.debug("NOTION_API_KEY or NOTION_DB_ID 未設定 → Notion書き込みスキップ")
+        return
+
+    headers = {
+        "Authorization": f"Bearer {NOTION_API_KEY}",
+        "Content-Type": "application/json",
+        "Notion-Version": "2022-06-28",
+    }
+
+    try:
+        result_label = {"win": "成約", "hold": "保留", "loss": "失注"}.get(
+            record.get("result", ""), record.get("result", "")
+        )
+
+        stage_map = {
+            1: "STEP1:不信の払拭",
+            2: "STEP2:不要の払拭",
+            3: "STEP3:不適の払拭",
+            4: "STEP4:クロージング",
+        }
+        flow_stage = record.get("flow_stage", 0)
+        stage_label = stage_map.get(flow_stage, "")
+        temp = record.get("temperature", "")
+
+        properties = {
+            "企業名": {"title": [{"text": {"content": record.get("company_name", "不明")}}]},
+        }
+
+        # 商談日（スラッシュ区切りをISO 8601に変換）
+        meeting_date = record.get("meeting_date", "")
+        if meeting_date:
+            try:
+                parts = meeting_date.replace("/", "-").split("-")
+                meeting_date = f"{int(parts[0]):04d}-{int(parts[1]):02d}-{int(parts[2]):02d}"
+            except (ValueError, IndexError):
+                pass
+            properties["商談日"] = {"date": {"start": meeting_date}}
+
+        if result_label:
+            properties["結果"] = {"select": {"name": result_label}}
+
+        score = record.get("score", 0)
+        if score:
+            properties["商談スコア"] = {"number": score}
+
+        if temp:
+            properties["先方温度感"] = {"select": {"name": temp}}
+
+        if stage_label:
+            properties["フロー到達ステージ"] = {"select": {"name": stage_label}}
+
+        industry = record.get("industry", "")
+        if industry:
+            properties["業種"] = {"select": {"name": industry}}
+
+        emp = record.get("employee_count", "")
+        if emp:
+            try:
+                properties["従業員数"] = {"number": int(emp)}
+            except (ValueError, TypeError):
+                pass
+
+        apo_route = record.get("apo_route", "")
+        if apo_route:
+            properties["アポ獲得経路"] = {"select": {"name": apo_route}}
+
+        contact_title = record.get("contact_title", "")
+        if contact_title:
+            properties["担当者役職"] = {"rich_text": [{"text": {"content": contact_title}}]}
+
+        minutes = record.get("meeting_minutes", 0)
+        if minutes:
+            properties["商談時間(分)"] = {"number": minutes}
+
+        cases = record.get("cases_used", "")
+        if cases:
+            case_list = [c.strip() for c in cases.split(",") if c.strip()]
+            properties["使った事例"] = {"multi_select": [{"name": c} for c in case_list]}
+
+        loss_cat = record.get("loss_category", "")
+        if loss_cat:
+            properties["失注理由カテゴリ"] = {"select": {"name": loss_cat}}
+
+        next_action = record.get("next_action", "")
+        if next_action:
+            properties["次回アクション"] = {"rich_text": [{"text": {"content": next_action[:2000]}}]}
+
+        feedback = record.get("feedback", "")
+        if feedback:
+            properties["フィードバック"] = {"rich_text": [{"text": {"content": feedback[:2000]}}]}
+
+        hits = record.get("hits", [])
+        misses = record.get("misses", [])
+        objections = record.get("objections", [])
+        total_utt = record.get("total_utterances", 0)
+
+        hit_count = len(hits)
+        miss_count = len(misses)
+        obj_count = len(objections)
+
+        if hit_count:
+            properties["Hit数"] = {"number": hit_count}
+        if miss_count:
+            properties["Miss数"] = {"number": miss_count}
+        if obj_count:
+            properties["Objection数"] = {"number": obj_count}
+        if total_utt:
+            properties["総発言数"] = {"number": total_utt}
+
+        if total_utt > 0 and hit_count > 0:
+            properties["Hit率(%)"] = {"number": round(hit_count / total_utt * 100, 1)}
+
+        if flow_stage > 0:
+            properties["フロー完遂率(%)"] = {"number": round(flow_stage / 4 * 100, 1)}
+
+        created_at = record.get("created_at", "")
+        if created_at:
+            properties["保存日時"] = {"date": {"start": created_at[:10]}}
+
+        # Hitカテゴリ
+        hit_cats = record.get("hit_categories", [])
+        if hit_cats:
+            properties["Hitカテゴリ"] = {"multi_select": [{"name": c} for c in hit_cats]}
+
+        # 失注シグナル
+        loss_sigs = record.get("loss_signals", [])
+        if loss_sigs:
+            properties["失注シグナル"] = {"multi_select": [{"name": c} for c in loss_sigs]}
+
+        # Objectionカテゴリ
+        obj_cats = record.get("objection_categories", [])
+        if obj_cats:
+            properties["Objectionカテゴリ"] = {"multi_select": [{"name": c} for c in obj_cats]}
+
+        children = []
+
+        if feedback:
+            children.append({
+                "object": "block",
+                "type": "heading_2",
+                "heading_2": {"rich_text": [{"text": {"content": "フィードバック"}}]},
+            })
+            for i in range(0, len(feedback), 2000):
+                children.append({
+                    "object": "block",
+                    "type": "paragraph",
+                    "paragraph": {"rich_text": [{"text": {"content": feedback[i:i+2000]}}]},
+                })
+
+        if hits:
+            children.append({
+                "object": "block",
+                "type": "heading_2",
+                "heading_2": {"rich_text": [{"text": {"content": "Hits（刺さった発言）"}}]},
+            })
+            for h in hits:
+                quote = h.get("quote", "")
+                reason = h.get("reason", "")
+                children.append({
+                    "object": "block",
+                    "type": "quote",
+                    "quote": {"rich_text": [{"text": {"content": quote[:2000]}}]},
+                })
+                if reason:
+                    children.append({
+                        "object": "block",
+                        "type": "paragraph",
+                        "paragraph": {"rich_text": [{"text": {"content": f"→ {reason}"[:2000]}}]},
+                    })
+
+        if misses:
+            children.append({
+                "object": "block",
+                "type": "heading_2",
+                "heading_2": {"rich_text": [{"text": {"content": "Misses（失注シグナル）"}}]},
+            })
+            for m in misses:
+                quote = m.get("quote", "")
+                reason = m.get("reason", "")
+                children.append({
+                    "object": "block",
+                    "type": "quote",
+                    "quote": {"rich_text": [{"text": {"content": quote[:2000]}}]},
+                })
+                if reason:
+                    children.append({
+                        "object": "block",
+                        "type": "paragraph",
+                        "paragraph": {"rich_text": [{"text": {"content": f"→ {reason}"[:2000]}}]},
+                    })
+
+        if objections:
+            children.append({
+                "object": "block",
+                "type": "heading_2",
+                "heading_2": {"rich_text": [{"text": {"content": "Objections（反論・懸念）"}}]},
+            })
+            for o in objections:
+                quote = o.get("quote", "")
+                reason = o.get("reason", "")
+                reply = o.get("reply", "")
+                children.append({
+                    "object": "block",
+                    "type": "quote",
+                    "quote": {"rich_text": [{"text": {"content": quote[:2000]}}]},
+                })
+                detail = ""
+                if reason:
+                    detail += f"本質: {reason}"
+                if reply:
+                    detail += f"\n切り返し案: {reply}"
+                if detail:
+                    children.append({
+                        "object": "block",
+                        "type": "paragraph",
+                        "paragraph": {"rich_text": [{"text": {"content": detail[:2000]}}]},
+                    })
+
+        payload = {
+            "parent": {"database_id": NOTION_DB_ID},
+            "properties": properties,
+        }
+        if children:
+            payload["children"] = children[:100]
+
+        resp = requests.post(
+            "https://api.notion.com/v1/pages",
+            json=payload,
+            headers=headers,
+            timeout=30,
+        )
+        if resp.ok:
+            page_id = resp.json().get("id", "")
+            logger.info(f"Notion書き込み成功: {record.get('company_name')} (ID:{page_id})")
+        else:
+            logger.warning(f"Notion書き込み失敗: {resp.status_code} - {resp.text[:300]}")
+
+    except Exception as e:
+        logger.warning(f"Notion書き込み例外（無視して続行）: {e}")
 
 
 def update_sheet_result(record: dict, new_result: str) -> None:
@@ -1084,6 +1343,9 @@ def save_knowledge(req: SaveKnowledgeRequest):
         "hits":             req.hits,
         "misses":           req.misses,
         "objections":       req.objections,
+        "hit_categories":      req.hit_categories,
+        "loss_signals":        req.loss_signals,
+        "objection_categories": req.objection_categories,
         "created_at":       datetime.datetime.now().isoformat(),
     }
     records.insert(0, new_record)
@@ -1094,6 +1356,9 @@ def save_knowledge(req: SaveKnowledgeRequest):
 
     # HubSpotにも商談プロパティを書き込む（失敗しても続行）
     push_to_hubspot(new_record)
+
+    # Notionにも商談記録を書き込む（失敗しても続行）
+    push_to_notion(new_record)
 
     logger.info(f"商談記録を保存: {req.company_name} / {req.result}")
     return JSONResponse({"status": "ok", "id": new_record["id"]})
