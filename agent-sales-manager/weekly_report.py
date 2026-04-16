@@ -615,6 +615,193 @@ def fetch_hubspot_data(hubspot_token: str) -> str:
 
 
 # ============================================================
+# HubSpot：リストシグナル別アポ獲得率集計（独立取得）
+# ============================================================
+
+def get_hubspot_signal_stats(hubspot_token: str) -> str:
+    """
+    HubSpotからリストシグナル別アポ獲得率を集計する（直近30日）。
+
+    取得プロパティ：
+    - a_12（リストランク）、apurochinaiyou（架電結果）、apurochibi（アプローチ日）
+    - houteigaifukurikouseinokisaiari（S3）、kenkoukeieihenochuuryoku（S4）
+    - hantoshiinaihprinyuaru（S5）、jishabiruhoyuu（S6）、industry（業種）
+
+    失敗しても他のデータ取得には影響しない独立設計。
+    """
+    if not hubspot_token:
+        return "（HubSpot取得失敗: HUBSPOT_TOKEN未設定）"
+
+    try:
+        from datetime import timedelta
+
+        hs_headers = {
+            "Authorization": f"Bearer {hubspot_token}",
+            "Content-Type": "application/json",
+        }
+        base_url = "https://api.hubapi.com"
+
+        # 直近30日のタイムスタンプ（ミリ秒）
+        now = datetime.now()
+        thirty_days_ago_ms = int((now - timedelta(days=30)).timestamp() * 1000)
+
+        # ページネーションしながら全件取得
+        all_records: list = []
+        after: str | None = None
+        while True:
+            payload: dict = {
+                "filterGroups": [{
+                    "filters": [{
+                        "propertyName": "apurochibi",
+                        "operator": "GTE",
+                        "value": str(thirty_days_ago_ms),
+                    }]
+                }],
+                "properties": [
+                    "a_12",
+                    "apurochinaiyou",
+                    "apurochibi",
+                    "houteigaifukurikouseinokisaiari",
+                    "kenkoukeieihenochuuryoku",
+                    "hantoshiinaihprinyuaru",
+                    "jishabiruhoyuu",
+                    "industry",
+                ],
+                "limit": 100,
+            }
+            if after:
+                payload["after"] = after
+
+            resp = requests.post(
+                f"{base_url}/crm/v3/objects/companies/search",
+                headers=hs_headers,
+                json=payload,
+                timeout=15,
+            )
+            if not resp.ok:
+                return f"（HubSpot取得失敗: {resp.status_code}）"
+
+            data = resp.json()
+            all_records.extend(data.get("results", []))
+
+            # ページネーション：paging.next.after が存在すれば次ページあり
+            after = data.get("paging", {}).get("next", {}).get("after")
+            if not after:
+                break
+
+        if not all_records:
+            return "（直近30日のデータなし）"
+
+        # ── 集計 ───────────────────────────────────────────────────
+        # ランク別
+        rank_stats: dict[str, dict] = {}
+        # シグナル別
+        _SIGNAL_META = {
+            "S3": {"label": "法定外福利厚生あり", "prop": "houteigaifukurikouseinokisaiari"},
+            "S4": {"label": "健康経営注力あり",   "prop": "kenkoukeieihenochuuryoku"},
+            "S5": {"label": "HPリニューアルあり", "prop": "hantoshiinaihprinyuaru"},
+            "S6": {"label": "自社ビルあり",       "prop": "jishabiruhoyuu"},
+        }
+        signal_stats: dict[str, dict] = {
+            k: {"label": v["label"], "total": 0, "shacho_apo": 0}
+            for k, v in _SIGNAL_META.items()
+        }
+        # 業種別
+        industry_stats: dict[str, dict] = {}
+
+        for rec in all_records:
+            props = rec.get("properties", {})
+            rank     = props.get("a_12", "") or ""
+            approach = props.get("apurochinaiyou", "") or ""
+
+            is_shacho_apo = (approach == "社長アポ")
+            is_tanto_apo  = (approach == "担当アポ")
+
+            # ランク別集計
+            if rank:
+                if rank not in rank_stats:
+                    rank_stats[rank] = {"total": 0, "shacho_apo": 0, "tanto_apo": 0}
+                rank_stats[rank]["total"] += 1
+                if is_shacho_apo:
+                    rank_stats[rank]["shacho_apo"] += 1
+                if is_tanto_apo:
+                    rank_stats[rank]["tanto_apo"] += 1
+
+            # シグナル別集計（プロパティ値が "true" の場合のみカウント）
+            for sig_key, meta in _SIGNAL_META.items():
+                if props.get(meta["prop"], "") == "true":
+                    signal_stats[sig_key]["total"] += 1
+                    if is_shacho_apo:
+                        signal_stats[sig_key]["shacho_apo"] += 1
+
+            # 業種別集計
+            industry = props.get("industry", "") or ""
+            if industry:
+                if industry not in industry_stats:
+                    industry_stats[industry] = {"total": 0, "shacho_apo": 0}
+                industry_stats[industry]["total"] += 1
+                if is_shacho_apo:
+                    industry_stats[industry]["shacho_apo"] += 1
+
+        # ── テキスト組み立て ────────────────────────────────────────
+        lines = [
+            "## 🎯 リストシグナル別アポ獲得率（直近30日）",
+            f"集計件数: {len(all_records)}件",
+            "",
+            "### ランク別",
+            "| ランク | 件数 | 社長アポ | 担当アポ | 社長アポ率 | 総アポ率 |",
+            "|---|---|---|---|---|---|",
+        ]
+
+        for rank_label, rank_key in [("Aランク", "A"), ("Bランク", "B"), ("Cランク", "C")]:
+            s = rank_stats.get(rank_key, {"total": 0, "shacho_apo": 0, "tanto_apo": 0})
+            total  = s["total"]
+            shacho = s["shacho_apo"]
+            tanto  = s["tanto_apo"]
+            total_apo = shacho + tanto
+            shacho_rate = f"{shacho / total * 100:.1f}%" if total > 0 else "-"
+            total_rate  = f"{total_apo / total * 100:.1f}%" if total > 0 else "-"
+            lines.append(
+                f"| {rank_label} | {total}件 | {shacho}件 | {tanto}件 | {shacho_rate} | {total_rate} |"
+            )
+
+        lines += [
+            "",
+            "### シグナル別（S3〜S6）",
+            "| シグナル | 件数 | 社長アポ | 社長アポ率 |",
+            "|---|---|---|---|",
+        ]
+        for sig_key in ["S3", "S4", "S5", "S6"]:
+            s = signal_stats[sig_key]
+            total  = s["total"]
+            shacho = s["shacho_apo"]
+            rate   = f"{shacho / total * 100:.1f}%" if total > 0 else "-"
+            lines.append(f"| {s['label']} | {total}件 | {shacho}件 | {rate} |")
+
+        # 業種別（5件以上のみ・件数降順）
+        industry_filtered = {
+            k: v for k, v in industry_stats.items() if v["total"] >= 5
+        }
+        if industry_filtered:
+            lines += [
+                "",
+                "### 業種別（5件以上）",
+                "| 業種 | 件数 | 社長アポ | 社長アポ率 |",
+                "|---|---|---|---|",
+            ]
+            for ind, s in sorted(industry_filtered.items(), key=lambda x: -x[1]["total"]):
+                total  = s["total"]
+                shacho = s["shacho_apo"]
+                rate   = f"{shacho / total * 100:.1f}%" if total > 0 else "-"
+                lines.append(f"| {ind} | {total}件 | {shacho}件 | {rate} |")
+
+        return "\n".join(lines)
+
+    except Exception as e:
+        return f"（HubSpot取得失敗: {e}）"
+
+
+# ============================================================
 # Slack：先週のフィードバック取得
 # ============================================================
 
@@ -1257,6 +1444,19 @@ def main():
         hubspot_data = "（取得失敗：HUBSPOT_TOKEN未設定）"
         print("  ⚠ スキップ（HUBSPOT_TOKEN未設定）")
 
+    # --- Step 4b: HubSpotシグナル別集計（独立・失敗しても続行） ---
+    print("【Step 4b】HubSpotからシグナル別アポ獲得率を集計中...")
+    signal_stats_text = ""
+    if hubspot_token:
+        signal_stats_text = get_hubspot_signal_stats(hubspot_token)
+        if "取得失敗" in signal_stats_text:
+            print(f"  ⚠ {signal_stats_text[:100]}")
+            signal_stats_text = ""
+        else:
+            print("  ✓ シグナル別集計完了")
+    else:
+        print("  ⚠ スキップ（HUBSPOT_TOKEN未設定）")
+
     # --- Step 5: Slackフィードバック取得 ---
     print("【Step 5/8】先週のSlackフィードバックを取得中...")
     slack_feedback = fetch_slack_feedback(slack_bot_token)
@@ -1291,6 +1491,10 @@ def main():
         hubspot_data=hubspot_data,
     )
     print("  ✓ レポート生成完了")
+
+    # シグナル別集計をレポート末尾に追記
+    if signal_stats_text:
+        report = report + "\n\n---\n\n" + signal_stats_text
 
     # --- Step 8: ファイル保存 ---
     print("【Step 8/8】レポートをファイルに保存中...")
