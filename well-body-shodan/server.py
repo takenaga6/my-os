@@ -91,6 +91,7 @@ class GenerateRequest(BaseModel):
     company_url:    str        # 企業URL
     president_name: str = ""   # 社長名（任意）
     apo_info:       str = ""   # アポ取得時の情報（任意）
+    industry:       str = ""   # 業種（任意・Notionナレッジ参照に使用）
 
 class GenerateResponse(BaseModel):
     research: str   # ① 企業リサーチサマリー
@@ -212,10 +213,12 @@ def build_prompt(
     site_text: str,
     news_articles: list[dict],
     apo_info: str,
+    knowledge_patterns: str = "",
 ) -> str:
     """
     Claudeに渡すプロンプトを組み立てる。
     収集した情報をまとめて4つの出力を依頼する。
+    knowledge_patterns: Notionナレッジから取得した業種別hit/missパターン（任意）
     """
     news_text = "\n".join(
         f"・{a['title']}\n  {a['snippet']}\n  URL: {a['link']}"
@@ -224,6 +227,8 @@ def build_prompt(
 
     site_section = site_text if site_text else "（取得できませんでした）"
     apo_section  = apo_info  if apo_info  else "（入力なし）"
+    # 過去商談ナレッジセクション（取得できた場合のみ挿入）
+    knowledge_section = f"\n{knowledge_patterns}\n" if knowledge_patterns else ""
 
     return f"""あなたはWell Bodyという企業向けストレッチサービスの営業担当者のアシスタントです。
 以下の情報をもとに、商談準備資料を4つ生成してください。
@@ -257,7 +262,7 @@ URL: {company_url}
 - アポ情報と照合したポイント（先方が言っていた課題と企業情報の繋がり）
 
 ② キラートーク（業種別カスタマイズ）
-商談フローの各ステップに合わせて以下を作成：
+{knowledge_section}商談フローの各ステップに合わせて以下を作成：
 (1) 業種トーク（この企業の働き方に合わせた導入フレーズ）
 (2) YES取りの文言（先方が「たしかに」と言いやすい問いかけ）
 (3) 刺さりそうな導入事例（業種・規模・課題が近い事例を2〜3件想定で提案）
@@ -1032,6 +1037,120 @@ def push_to_notion(record: dict) -> None:
         logger.warning(f"Notion書き込み例外（無視して続行）: {e}")
 
 
+def fetch_notion_knowledge_patterns(industry: str) -> str:
+    """
+    Notionの商談ナレッジDBから業種別のhit/missパターンを取得して
+    キラートーク生成プロンプトに挿入するセクション文字列を返す。
+    失敗した場合は空文字を返す（呼び出し元はスキップする）。
+    """
+    if not NOTION_API_KEY:
+        return ""
+
+    # 商談ナレッジDB ID（固定）
+    _knowledge_db_id = "3432e3257cf480a7bd97e8d6af5c4553"
+    headers = {
+        "Authorization": f"Bearer {NOTION_API_KEY}",
+        "Content-Type": "application/json",
+        "Notion-Version": "2022-06-28",
+    }
+
+    try:
+        # 全ページを取得（ページネーション対応）
+        all_pages: list[dict] = []
+        start_cursor = None
+
+        while True:
+            payload: dict = {"page_size": 100}
+            if start_cursor:
+                payload["start_cursor"] = start_cursor
+
+            resp = requests.post(
+                f"https://api.notion.com/v1/databases/{_knowledge_db_id}/query",
+                json=payload,
+                headers=headers,
+                timeout=15,
+            )
+            if not resp.ok:
+                logger.warning(
+                    f"Notion商談ナレッジDB取得失敗: {resp.status_code} - {resp.text[:200]}"
+                )
+                return ""
+
+            data = resp.json()
+            all_pages.extend(data.get("results", []))
+
+            if not data.get("has_more"):
+                break
+            start_cursor = data.get("next_cursor")
+
+        total_count = len(all_pages)
+        if total_count == 0:
+            return ""
+
+        # プロパティ取得ヘルパー
+        def _select(page: dict, prop_name: str) -> str:
+            sel = page.get("properties", {}).get(prop_name, {}).get("select")
+            return sel.get("name", "") if sel else ""
+
+        def _multi_select(page: dict, prop_name: str) -> list[str]:
+            ms = page.get("properties", {}).get(prop_name, {}).get("multi_select", [])
+            return [item.get("name", "") for item in ms if item.get("name")]
+
+        # 業種が指定されている場合は一致するページを抽出
+        if industry:
+            matched_pages = [p for p in all_pages if _select(p, "業種") == industry]
+        else:
+            matched_pages = []
+
+        # 一致しない（または業種未指定）場合は全件を使う
+        target_pages = matched_pages if matched_pages else all_pages
+        matched_count = len(matched_pages) if matched_pages else total_count
+
+        # hit/objection/成約Hitを集計
+        from collections import Counter
+        hit_counter: Counter = Counter()
+        obj_counter: Counter = Counter()
+        win_hits: Counter = Counter()
+
+        for page in target_pages:
+            hit_cats = _multi_select(page, "Hitカテゴリ")
+            obj_cats = _multi_select(page, "Objectionカテゴリ")
+            result_val = _select(page, "結果")
+
+            for h in hit_cats:
+                hit_counter[h] += 1
+            for o in obj_cats:
+                obj_counter[o] += 1
+
+            # 成約 / 体験会確定 の商談のHitカテゴリを有効Hitとして集計
+            if result_val in ("成約", "体験会確定"):
+                for h in hit_cats:
+                    win_hits[h] += 1
+
+        # 上位3つを「カテゴリ名（N件）」形式で整形
+        top_hits     = "、".join(f"{k}（{v}件）" for k, v in hit_counter.most_common(3)) or "（データなし）"
+        top_objs     = "、".join(f"{k}（{v}件）" for k, v in obj_counter.most_common(3)) or "（データなし）"
+        top_win_hits = "、".join(f"{k}（{v}件）" for k, v in win_hits.most_common(3)) or "（データなし）"
+
+        logger.info(
+            f"Notion商談ナレッジ取得完了: 業種={industry or '未指定'} "
+            f"対象={matched_count}件 / 全{total_count}件"
+        )
+
+        return (
+            f"---過去の商談データ（業種別）---\n"
+            f"【この業種でよく刺さるHit】：{top_hits}\n"
+            f"【この業種でよく出るObjection】：{top_objs}\n"
+            f"【成約した商談で有効だったHit】：{top_win_hits}\n"
+            f"【件数】：{matched_count}件 / 全{total_count}件\n"
+            f"---"
+        )
+
+    except Exception as e:
+        logger.warning(f"Notion商談ナレッジパターン取得失敗（スキップ）: {e}")
+        return ""
+
+
 def update_sheet_result(record: dict, new_result: str) -> None:
     """
     Googleスプレッドシートの該当行の「結果」列を上書き更新する。
@@ -1154,7 +1273,14 @@ def generate(req: GenerateRequest):
     news_articles = search_company_news(req.company_name, req.president_name)
     logger.info(f"Web検索完了: {len(news_articles)}件取得")
 
-    prompt   = build_prompt(req.company_name, req.company_url, site_text, news_articles, req.apo_info)
+    # Notionナレッジから業種別hit/missパターンを取得（失敗時は空文字でスキップ）
+    knowledge_patterns = fetch_notion_knowledge_patterns(req.industry)
+    if knowledge_patterns:
+        logger.info("Notion商談ナレッジパターン取得完了 → キラートークに挿入")
+    else:
+        logger.info("Notion商談ナレッジパターンなし → 従来通りのキラートークを生成")
+
+    prompt   = build_prompt(req.company_name, req.company_url, site_text, news_articles, req.apo_info, knowledge_patterns)
     raw_text = generate_with_claude(prompt)
     logger.info("Claude API生成完了")
 
