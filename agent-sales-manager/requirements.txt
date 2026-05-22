@@ -1,5 +1,0 @@
-anthropic
-requests
-gspread
-google-auth
-python-dotenv
